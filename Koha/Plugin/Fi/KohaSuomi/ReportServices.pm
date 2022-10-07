@@ -14,7 +14,7 @@ our $VERSION = "1.0.0";
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
-    name            => 'Raportointipalvelu-liitännäinen',
+    name            => 'Raportteri',
     author          => 'Lari Strand, Emmi Takkinen',
     date_authored   => '2022-10-07',
     date_updated    => '2022-10-07',
