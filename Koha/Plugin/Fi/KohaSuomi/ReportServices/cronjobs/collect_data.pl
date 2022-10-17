@@ -21,6 +21,8 @@ use strict;
 use warnings;
 
 use Modern::Perl;
+use open qw( :std :encoding(UTF-8) );
+binmode( STDOUT, ":encoding(UTF-8)" );
 
 use Getopt::Long;
 
@@ -29,14 +31,15 @@ use C4::Context();
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
-my ($limit, $json, $csv, $verbose);
+my ($limit, $timeperiod, $json, $csv, $verbose);
 
 GetOptions(
-    'h|help'    => \$help,
-    'l|limit:i' => \$limit,
-    'json'      => \$json,
-    'csv'       => \$csv,
-    'v|verbose' => \$verbose,
+    'h|help'       => \$help,
+    'l|limit:i'    => \$limit,
+    't|timeperiod' => \$timeperiod,
+    'json'         => \$json,
+    'csv'          => \$csv,
+    'v|verbose'    => \$verbose,
 );
 
 my $usage = << 'ENDUSAGE';
@@ -45,15 +48,17 @@ This is a script to collect data for report service.
 
 Script has the following parameters :
 
-    -h --help       this message
+    -h --help           This helpful message.
 
-    -l --limit      an SQL LIMIT -clause for testing purposes
+    -l --limit          An SQL LIMIT -clause for testing purposes
 
-    --json          Build .json file
+    -t --timeperiod     In months (not in use yet).
 
-    --csv           Build .csv file
+    --json              Build .json file
 
-    -v --verbose    More chatty script.
+    --csv               Build .csv file
+
+    -v --verbose        More chatty script.
 
 ENDUSAGE
 
@@ -62,4 +67,4 @@ if ($help) {
     exit;
 }
 
-Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $verbose);
+Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $verbose);

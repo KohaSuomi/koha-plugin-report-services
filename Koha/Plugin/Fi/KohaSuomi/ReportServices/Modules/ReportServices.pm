@@ -31,27 +31,105 @@ use JSON;
 
 use C4::Context;
 
+use Koha::AuthorisedValues;
+use Koha::Libraries;
+
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker;
 
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection;
-use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issues;
+use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue;
 
 sub collect_report_data {
-    my ($limit, $verbose) = @_;
+    my ($limit, $timeperiod, $verbose) = @_;
 
     my $chunker = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker->new(undef, $limit, undef, $verbose);
+
+    my @subject_fields = subject_fields();
+    my $libraries = get_libraries();
+    my $itemtypes = get_itemtypes();
+    my $shelving_locations = get_locations();
+
     while (my $items = $chunker->get_chunk(undef, $limit)) {
         foreach my $item (@$items) {
-            create_data_chunk($item);
+            my $data_chunk = create_data_chunk($item, \@subject_fields, $libraries, $itemtypes, $shelving_locations);
         }
     }
 }
 
 sub create_data_chunk {
-    my ($item) = @_;
+    my ($item, $subject_fields, $libraries, $itemtypes, $shelving_locations) = @_;
 
-    my $data_chunk;
-    return $data_chunk;
+    my $collection = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection->new();
+    my $issue = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue->new();
+    my $marcxml = $collection->get_marcxml($item->{biblionumber});
+    my $marc_record = eval { MARC::Record::new_from_xml( $marcxml, "utf8", C4::Context->preference('marcflavour') ) };
+    if ($@) {
+        die $@;
+    }
+
+    $item->{homebranch} = $libraries->{$item->{homebranch}}->{branchname};
+    $item->{holdingbranch} = $libraries->{$item->{holdingbranch}}->{branchname};
+
+    $item->{itemtype} = $itemtypes->{$item->{itemtype}};
+
+    $item->{location} = $shelving_locations->{$item->{location}};
+
+    $item->{subject_added_entries} = $collection->subject_added_entries($marc_record, $subject_fields);
+    $item->{checked_out_count} = $collection->times_checked_out($item->{itemnumber});
+
+    my $is = $issue->get_issue($item->{itemnumber});
+    unless (!$is){
+        $is->{issue_type} = $issue->get_issue_type($is->{borrowernumber}, $item->{itemnumber}, $is->{issuedate});
+        $is->{renew_type} = $issue->get_renew_type($is->{borrowernumber}, $item->{itemnumber}, $is->{lastreneweddate});
+        $is->{branchcode} = $libraries->{$is->{branchcode}}->{branchname};
+
+        #delete unneeded values
+        delete $is->{borrowernumber};
+    }
+
+    $item->{issue} = $is;
+
+    return $item;
+}
+
+sub subject_fields {
+    my $dbh = C4::Context->dbh();
+    my $query = "SELECT DISTINCT(tagfield) FROM marc_tag_structure WHERE tagfield LIKE '6__'";
+    my $sth = $dbh->prepare($query);
+    $sth->execute( );
+
+    my @tagfields;
+    while ( my $row = $sth->fetchrow_hashref ) {
+	    push @tagfields, $row->{tagfield};
+    }
+    return @tagfields;
+}
+
+sub get_libraries {
+    my $libraries = Koha::Libraries->search()->unblessed;
+    my %libraries_hash;
+    foreach my $library (@$libraries){
+        $libraries_hash{$library->{branchcode}} = $library;
+    }
+    return  \%libraries_hash;
+}
+
+sub get_itemtypes {
+    my $itemtypes = Koha::AuthorisedValues->search( { category => 'MTYPE' } )->unblessed;
+    my %itemtypes_hash;
+    foreach my $itemtype (@$itemtypes){
+        $itemtypes_hash{$itemtype->{authorised_value}} = $itemtype->{lib};
+    }
+    return  \%itemtypes_hash;
+}
+
+sub get_locations {
+    my $locations = Koha::AuthorisedValues->search( { category => 'LOC' } )->unblessed;
+    my %locations_hash;
+    foreach my $location (@$locations){
+        $locations_hash{$location->{authorised_value}} = $location->{lib};
+    }
+    return  \%locations_hash;
 }
 
 1;
