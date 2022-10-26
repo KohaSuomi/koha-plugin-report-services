@@ -67,28 +67,34 @@ sub create_data_chunk {
         die $@;
     }
 
-    $item->{homebranch} = $libraries->{$item->{homebranch}}->{branchname};
-    $item->{holdingbranch} = $libraries->{$item->{holdingbranch}}->{branchname};
-
-    $item->{itemtype} = $itemtypes->{$item->{itemtype}};
-
-    $item->{location} = $shelving_locations->{$item->{location}};
-
+    # Collect
     $item->{subject_added_entries} = $collection->subject_added_entries($marc_record, $subject_fields);
     $item->{checked_out_count} = $collection->times_checked_out($item->{itemnumber});
 
+    my @libraries = keys %$libraries;
+    $item->{floats} = $collection->is_floating($item, \@libraries);
+
+    # Collect library name, itemtype description etc.
+    $item->{homebranch_pre} = $libraries->{$item->{homebranch}}->{branchname};
+    $item->{holdingbranch_pre} = $libraries->{$item->{holdingbranch}}->{branchname};
+
+    $item->{itemtype} = $itemtypes->{$item->{itemtype}};
+    $item->{location} = $shelving_locations->{$item->{location}};
+
+    # Handle issues
     my $is = $issue->get_issue($item->{itemnumber});
     unless (!$is){
         $is->{issue_type} = $issue->get_issue_type($is->{borrowernumber}, $item->{itemnumber}, $is->{issuedate});
         $is->{renew_type} = $issue->get_renew_type($is->{borrowernumber}, $item->{itemnumber}, $is->{lastreneweddate});
         $is->{branchcode} = $libraries->{$is->{branchcode}}->{branchname};
-
-        #delete unneeded values
-        delete $is->{borrowernumber};
     }
 
     $item->{issue} = $is;
 
+    #delete unneeded values
+    delete $item->{issue}->{borrowernumber};
+    delete $item->{barcode};
+    warn Data::Dumper::Dumper $item;
     return $item;
 }
 

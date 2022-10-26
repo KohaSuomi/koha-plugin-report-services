@@ -24,6 +24,9 @@ use Modern::Perl;
 use C4::Context;
 
 use C4::Biblio;
+use C4::Circulation;
+
+use Koha::Libraries;
 
 use base qw(Koha::Objects);
 
@@ -33,19 +36,6 @@ sub _type {
 
 sub object_class {
     return 'Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection';
-}
-
-=head seen_last_time
-
-    In which branch item was last seen.
-
-=cut
-
-sub seen_last_time {
-    my ($self, $holdingbranch, $datelastseen) = @_;
-
-    my $branch_last_seen;
-    return $branch_last_seen;
 }
 
 =head subject_added_entries
@@ -58,10 +48,16 @@ sub subject_added_entries {
     my ($self, $marc_record, $subject_fields) = @_;
 
     my $subject_added_entries;
-    foreach my $field (@$subject_fields){
-        my $entry = $marc_record->subfield($field,'a');
-        $subject_added_entries .= $entry unless !$entry;
+    my @entries;
+    foreach my $field ($marc_record->fields()) {
+        my $tag = $field->tag;
+        if(grep( /^$tag$/, @$subject_fields )){
+            my $entry = $field->subfield('a');
+            push @entries, $entry;
+        }
     }
+    $subject_added_entries = join(',', @entries) unless !@entries;
+
     return $subject_added_entries;
 }
 
@@ -72,10 +68,18 @@ sub subject_added_entries {
 =cut
 
 sub is_floating {
-    my ($self, $itemnumber) = @_;
+    my ($self, $item, $libraries) = @_;
 
-    my $is_floating = 0;
-    return $is_floating;
+    foreach my $library (@$libraries){
+        my $hbr = C4::Circulation::GetBranchItemRule($item->{homebranch}, $item->{itemtype})->{'returnbranch'} || "homebranch";
+        my $validate_float = Koha::Libraries->find( $item->{homebranch} )->validate_float_sibling({ branchcode => $library });
+        return 1 if $hbr eq "returnbylibrarygroup" && $validate_float;
+
+        my $validate_floatrules = C4::Circulation::_validate_floatrules({ barcode => $item->{barcode}, branch => $library });
+        return 1 if $validate_floatrules && $validate_floatrules eq "float";
+    }
+
+    return 0;
 }
 
 =head times_checked_out
