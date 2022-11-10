@@ -56,7 +56,7 @@ sub subject_added_entries {
             push @entries, $entry;
         }
     }
-    $subject_added_entries = join(',', @entries) unless !@entries;
+    $subject_added_entries = join(';', @entries) unless !@entries;
 
     return $subject_added_entries;
 }
