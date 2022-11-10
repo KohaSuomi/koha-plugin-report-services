@@ -36,7 +36,6 @@ use Koha::Libraries;
 
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker;
 
-use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::ReportDataChunk;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue;
 
