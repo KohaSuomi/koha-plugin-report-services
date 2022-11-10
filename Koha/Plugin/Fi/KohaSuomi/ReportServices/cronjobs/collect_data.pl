@@ -28,6 +28,8 @@ use Getopt::Long;
 
 use C4::Context();
 
+use Koha::Plugins;
+
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
