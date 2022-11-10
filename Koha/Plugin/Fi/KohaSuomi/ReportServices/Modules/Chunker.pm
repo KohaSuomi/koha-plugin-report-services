@@ -63,8 +63,8 @@ sub _get_chunk {
     }
     my $dbh = C4::Context->dbh();
     my $query = "SELECT i.itemnumber, i.biblionumber, i.homebranch, i.location, i.notforloan,
-    i.holdingbranch, i.datelastseen, i.cn_sort, i.price, i.issues, i.dateaccessioned, i.barcode,
-    bi.isbn, b.title, b.author, b.copyrightdate, bde.primary_language, bde.itemtype, bde.cn_class
+    i.holdingbranch, i.datelastseen, i.cn_sort, i.price, i.issues as issues_total, i.dateaccessioned,
+    i.barcode, bi.isbn, b.title, b.author, b.copyrightdate, bde.primary_language, bde.itemtype, bde.cn_class
     FROM items i
     LEFT JOIN biblioitems bi ON (i.biblioitemnumber = bi.biblioitemnumber)
     LEFT JOIN biblio b ON (bi.biblionumber = b.biblionumber)

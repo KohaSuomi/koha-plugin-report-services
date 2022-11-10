@@ -31,13 +31,14 @@ use C4::Context();
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
-my ($limit, $timeperiod, $json, $csv, $verbose);
+my ($limit, $timeperiod, $json, $pretty, $csv, $verbose);
 
 GetOptions(
     'h|help'       => \$help,
     'l|limit:i'    => \$limit,
     't|timeperiod' => \$timeperiod,
     'json'         => \$json,
+    'pretty'       => \$pretty,
     'csv'          => \$csv,
     'v|verbose'    => \$verbose,
 );
@@ -56,6 +57,8 @@ Script has the following parameters :
 
     --json              Build .json file
 
+    --pretty            Build pretty JSON
+
     --csv               Build .csv file
 
     -v --verbose        More chatty script.
@@ -67,4 +70,4 @@ if ($help) {
     exit;
 }
 
-Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $verbose);
+Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $json, $pretty, $csv, $verbose);

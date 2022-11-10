@@ -36,11 +36,12 @@ use Koha::Libraries;
 
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker;
 
+use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::ReportDataChunk;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue;
 
 sub collect_report_data {
-    my ($limit, $timeperiod, $verbose) = @_;
+    my ($limit, $timeperiod, $json, $pretty, $csv, $verbose) = @_;
 
     my $chunker = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker->new(undef, $limit, undef, $verbose);
 
@@ -49,10 +50,20 @@ sub collect_report_data {
     my $itemtypes = get_itemtypes();
     my $shelving_locations = get_locations();
 
+    my @data_chunks = ();
+
     while (my $items = $chunker->get_chunk(undef, $limit)) {
         foreach my $item (@$items) {
             my $data_chunk = create_data_chunk($item, \@subject_fields, $libraries, $itemtypes, $shelving_locations);
+            push @data_chunks, $data_chunk;
         }
+    }
+
+    if($json){
+        my $json_obj = JSON->new();
+        $json_obj->pretty unless !$pretty;
+        my $json_data= $json_obj->encode(\@data_chunks);
+        print $json_data;
     }
 }
 
@@ -67,7 +78,7 @@ sub create_data_chunk {
         die $@;
     }
 
-    # Collect
+    # Collect subject added entries, how many times item has been checked out etc.
     $item->{subject_added_entries} = $collection->subject_added_entries($marc_record, $subject_fields);
     $item->{checked_out_count} = $collection->times_checked_out($item->{itemnumber});
 
@@ -94,7 +105,7 @@ sub create_data_chunk {
     #delete unneeded values
     delete $item->{issue}->{borrowernumber};
     delete $item->{barcode};
-    warn Data::Dumper::Dumper $item;
+
     return $item;
 }
 

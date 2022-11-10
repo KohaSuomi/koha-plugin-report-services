@@ -116,7 +116,7 @@ sub get_marcxml {
 
 =head _getDeletedXmlBiblio
 
-    Again an ugly copypaste of GetXmlBiblio since GetDeletedXmlBiblio doesn't exists on community version.
+    Again an ugly copypaste of GetXmlBiblio since GetDeletedXmlBiblio doesn't exists in community version.
 
 =cut
 
