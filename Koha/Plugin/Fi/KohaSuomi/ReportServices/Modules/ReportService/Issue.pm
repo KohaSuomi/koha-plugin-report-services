@@ -40,7 +40,7 @@ sub get_issue {
 
     my $dbh = C4::Context->dbh();
     my $query = "SELECT i.issue_id, i.issuedate, i.branchcode, i.borrowernumber,
-    i.lastreneweddate, b.firstname, b.dateofbirth, b.categorycode, b. address, b.zipcode
+    i.lastreneweddate, b.firstname, b.dateofbirth, b.categorycode, b.address, b.zipcode
     FROM issues i
     LEFT JOIN borrowers b ON (i.borrowernumber = b.borrowernumber)
     WHERE itemnumber = ?";
