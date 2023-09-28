@@ -24,6 +24,7 @@ use C4::Context;
 use Data::Dumper;
 use Log::Log4perl;
 use Koha::Reports;
+use Koha::Plugin::Fi::KohaSuomi::ReportServices;
 
 my $dbh;
 
@@ -37,62 +38,77 @@ if (try_load($module)) {
   $dbh = C4::Context->dbh();
 }
 
-
-
-
-
-
 #This gets called from REST api
 
 sub try_load {
-  my $mod = shift;
+  
+    my $mod = shift;
 
-  eval("use $mod");
+    eval("use $mod");
 
-  if ($@) {
-    #print "\$@ = $@\n";
-    return(0);
-  } else {
-    return(1);
-  }
+    if ($@) {
+      #print "\$@ = $@\n";
+      return(0);
+    } else {
+      return(1);
+    }
 }
 
 sub getReportData {
   
-  my $CONFPATH = dirname($ENV{'KOHA_CONF'});
-my $KOHAPATH = C4::Context->config('intranetdir');
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+  
+    my $CONFPATH = dirname($ENV{'KOHA_CONF'});
+    my $KOHAPATH = C4::Context->config('intranetdir');
 
-# Initialize Logger
-my $log_conf = $CONFPATH . "/log4perl.conf";
-Log::Log4perl::init($log_conf);
-my $log = Log::Log4perl->get_logger('sipohttp');
-$log->debug("raportteri");
+    # Initialize Logger
+    my $log_conf = $CONFPATH . "/log4perl.conf";
+    Log::Log4perl::init($log_conf);
+    my $log = Log::Log4perl->get_logger('api');
+    
     
     my $c = shift->openapi->valid_input or return;
 
     return try {
+      
+        my $allowed_report_ids = Koha::Plugin::Fi::KohaSuomi::ReportServices->new()->retrieve_data('allowed_report_ids');
         
         my $sth;
         my $data;
         my $ref;
         
+        my @allowed_report_idsarr = $allowed_report_ids =~ /[^\s,]+/g;
+        
         my $report_id = $c->validation->param('report_id');
-        my $report = Koha::Reports->find( $report_id );
         
-        $log->debug($report_id);
-        
-        
-        my $sql         = $report->savedsql;
-        my $report_name = $report->report_name;
-        my $type        = $report->type;
-        
-        $log->debug($sql);
-        
-        $sth = $dbh->prepare($sql);
+        if ( grep( /^$report_id$/, @allowed_report_idsarr ) ) {
+            #report id configured in plugin config
+            $log->info("ReportServices API running report id " . $report_id);
+            
+            my $report = Koha::Reports->find( $report_id ); 
+            
+            unless ($report) {
+                $log->error("No such report");
+                return $c->render( status  => 404,
+                            openapi => { error => "Data not found" } );
+            }
+          
+            my $sql         = $report->savedsql;
+            my $report_name = $report->report_name;
+            my $type        = $report->type;
 
-        $sth->execute();
-
-        $ref = $sth->fetchall_arrayref({});
+            $sth = $dbh->prepare($sql);
+            $sth->execute();
+            $ref = $sth->fetchall_arrayref({});
+            
+            $sth->finish();        
+        }
+        else {
+            $log->info("Report id missing from Reportservices allowed reports config");
+            return $c->render( status  => 403,
+                            openapi => { error => "Forbidden" } );
+        }
         
         unless ($ref) {
             return $c->render( status  => 404,
@@ -105,51 +121,5 @@ $log->debug("raportteri");
         $c->unhandled_exception($_);
     }
 }
-
-
-
-
-
-# Hae data tietokannasta sarakkeen nimen kera (select x AS 'xxxx' esim.) käytettäväksi ilman fieldtemplate-määrittelyn tarvetta. Järjestys menee sekaisin (perl-array)
-# , { Slice => {} }); 
-
-# sub getagegroups {
-#     my $c = shift->openapi->valid_input or return;
-
-#     return try {
-        
-#         my $dbh = C4::Context->dbh();
-#         my $sth;
-#         my $ref;
-
-        
-
-#         my $result = $dbh->selectall_arrayref( qq{
-#  SELECT branchcode,
-
-# SUM( IF( dateofbirth > DATE_SUB(CURDATE(), INTERVAL 15 YEAR)  ,1,0)) AS '0-14-v.'
-
-
-# FROM borrowers
-
-# where categorycode IN ('HENKILO', 'LAPSI')
-
-# group by branchcode
-# order BY branchcode, dateofbirth
-# }, { Slice => {} });
-
-        
-#         unless ($result) {
-#             return $c->render( status  => 404,
-#                             openapi => { error => "Data not found" } );
-#         }
-
-#         return $c->render( status => 200, openapi => $result );
-#     }
-#     catch {
-#         $c->unhandled_exception($_);
-#     }
-# }
-
 
 1;

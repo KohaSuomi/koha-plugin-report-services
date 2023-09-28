@@ -1,0 +1,46 @@
+[% USE KohaDates %]
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Raportteri: Konfiguraatio</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Pluginit</a> &rsaquo; Raportteri &rsaquo; konfiguraatio</div>
+
+<div id="doc3">
+    <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
+    <h3>Raportteri: Konfiguraatio</h3>
+
+    <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
+    <form method="get">
+        <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+        <input type="hidden" name="class" value="[% CLASS %]"/>
+        <input type="hidden" name="method" value="[% METHOD %]"/>
+
+        <p>
+
+        <label for="allowed_report_ids">Raporttirajapinnan /reportservices/report ajettavaksi sallittavat Kohan sql-raporttien id:t (pilkulla erotettuna): </label>
+        <input type="text" name="allowed_report_ids" value="[% allowed_report_ids %]" />
+
+        <input type="hidden" name="save" value="1" />
+
+        <input type="submit" value="Tallenna" />
+    </form>
+
+    <hr/>
+
+    <p>
+        <h5>Update/Upgrade status</h5>
+        [% IF last_configured_by %]
+            Plugin settings were last updated by borrowernumber [% last_configured_by %].
+        [% END %]
+        [% IF last_upgraded %]
+            Plugin was last upgraded on this system on [% last_upgraded | $KohaDates with_hours => 1 %]
+        [% ELSE %]
+            Plugin has never been upgraded.
+        [% END %]
+    </p>
+
+[% INCLUDE 'intranet-bottom.inc' %]

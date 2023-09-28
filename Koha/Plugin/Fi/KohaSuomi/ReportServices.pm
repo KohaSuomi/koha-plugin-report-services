@@ -67,6 +67,34 @@ sub uninstall() {
     return 1;
 }
 
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    unless ( $cgi->param('save') ) {
+        my $template = $self->get_template({ file => 'configure.tt' });
+
+        ## Grab the values we already have for our settings, if any exist
+        $template->param(
+            allowed_report_ids => $self->retrieve_data('allowed_report_ids'),
+            last_configured_by => C4::Context->userenv->{'number'},
+            last_upgraded   => $self->retrieve_data('last_upgraded'),
+        );
+
+        $self->output_html( $template->output() );
+    }
+    else {
+        $self->store_data(
+            {
+                allowed_report_ids => $cgi->param('allowed_report_ids'),
+                last_configured_by => C4::Context->userenv->{'number'},
+            }
+        );
+        $self->go_home();
+    }
+}
+
+
 sub api_routes {
     my ( $self, $args ) = @_;
 
@@ -77,6 +105,17 @@ sub api_routes {
 
     #return $spec;
 }
+
+# sub api_routes {
+#     my ( $self, $args ) = @_;
+
+#     my $spec_dir = $self->mbf_dir();
+
+#     my $schema = JSON::Validator::Schema::OpenAPIv2->new;
+#     my $spec = $schema->resolve($spec_dir . '/openapi.json');
+
+#     return $self->_convert_refs_to_absolute($spec->data->{'paths'}, 'file://' . $spec_dir . '/');
+# }
 
 sub api_namespace {
     my ( $self ) = @_;

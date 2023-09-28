@@ -2,22 +2,20 @@
 	"/reportservices/reports": {
 		"get": {
 			"x-mojo-to": "Fi::KohaSuomi::ReportServices::ReportsController#getReportData",
-			"operationId": "getReportData",
+			"operationId": "getReportJSON",
 			"tags": [
-				"getreportdata"
+				"jsonreport"
 			],
 			"produces": [
 				"application/json"
 			],
-			"parameters": [
-				{
-					"name": "report_id",
-					"in": "query",
-					"required": true,
-					"description": "report id",
-					"type": "integer"					
-				}
-			],
+			"parameters": [{
+				"name": "report_id",
+				"in": "query",
+				"required": true,
+				"description": "Koha internal report id",
+				"type": "integer"
+			}],
 			"responses": {
 				"200": {
 					"description": "results",
@@ -27,6 +25,18 @@
 				},
 				"403": {
 					"description": "Access forbidden",
+					"schema": {
+						"type": "object",
+						"properties": {
+							"error": {
+								"description": "Error message",
+								"type": "string"
+							}
+						}
+					}
+				},
+				"404": {
+					"description": "Data not found",
 					"schema": {
 						"type": "object",
 						"properties": {
@@ -60,12 +70,12 @@
 							}
 						}
 					}
-				},
-                "x-koha-authorization": {
-                    "permissions": {
-                      "plugins": "report"
-                    }
-                  }
+				}		
+			},
+			"x-koha-authorization": {
+				"permissions": {
+					"plugin": "report"
+				}
 			}
 		}
 	}
