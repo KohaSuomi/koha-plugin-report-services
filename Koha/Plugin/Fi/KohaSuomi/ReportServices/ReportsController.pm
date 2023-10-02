@@ -69,14 +69,14 @@ sub getReportData {
     
     
     my $c = shift->openapi->valid_input or return;
+    
+    my $sth;
+    my $data;
+    my $ref;
 
     return try {
       
         my $allowed_report_ids = Koha::Plugin::Fi::KohaSuomi::ReportServices->new()->retrieve_data('allowed_report_ids');
-        
-        my $sth;
-        my $data;
-        my $ref;
         
         my @allowed_report_idsarr = $allowed_report_ids =~ /[^\s,]+/g;
         
@@ -102,7 +102,8 @@ sub getReportData {
             $sth->execute();
             $ref = $sth->fetchall_arrayref({});
             
-            $sth->finish();        
+            $sth->finish();  
+            $dbh->disconnect();
         }
         else {
             $log->info("Report id missing from Reportservices allowed reports config");
@@ -118,6 +119,7 @@ sub getReportData {
         return $c->render( status => 200, openapi => $ref );
     }
     catch {
+        $dbh->disconnect();
         $c->unhandled_exception($_);
     }
 }
