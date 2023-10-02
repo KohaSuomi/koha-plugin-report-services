@@ -74,7 +74,7 @@
 			},
 			"x-koha-authorization": {
 				"permissions": {
-					"plugin": "report"
+					"plugins": "report"
 				}
 			}
 		}
