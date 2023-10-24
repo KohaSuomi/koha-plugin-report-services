@@ -67,7 +67,6 @@ sub getReportData {
     Log::Log4perl::init($log_conf);
     my $log = Log::Log4perl->get_logger('api');
     
-    
     my $c = shift->openapi->valid_input or return;
     
     my $sth;
@@ -81,10 +80,20 @@ sub getReportData {
         my @allowed_report_idsarr = $allowed_report_ids =~ /[^\s,]+/g;
         
         my $report_id = $c->validation->param('report_id');
+        my (@param_names, @sql_params);
         
+        push(@sql_params,$c->validation->param('params1'));
+        push(@sql_params,$c->validation->param('params2'));
+        push(@sql_params,$c->validation->param('params3'));
+        push(@sql_params,$c->validation->param('params4'));
+        push(@sql_params,$c->validation->param('params5'));
+        
+        
+
         if ( grep( /^$report_id$/, @allowed_report_idsarr ) ) {
             #report id configured in plugin config
             $log->info("ReportServices API running report id " . $report_id);
+            $log->info("Params: " . Dumper(@sql_params));
             
             my $report = Koha::Reports->find( $report_id ); 
             
@@ -97,8 +106,11 @@ sub getReportData {
             my $sql         = $report->savedsql;
             my $report_name = $report->report_name;
             my $type        = $report->type;
+            
+            ( $sql, undef ) = $report->prep_report( \@param_names, \@sql_params );
 
             $sth = $dbh->prepare($sql);
+            
             $sth->execute();
             $ref = $sth->fetchall_arrayref({});
             
@@ -106,7 +118,7 @@ sub getReportData {
             $dbh->disconnect();
         }
         else {
-            $log->info("Report id missing from Reportservices allowed reports config");
+            $log->error("Report id missing from Reportservices allowed reports config");
             return $c->render( status  => 403,
                             openapi => { error => "Forbidden" } );
         }

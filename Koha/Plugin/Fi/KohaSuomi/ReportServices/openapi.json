@@ -15,7 +15,38 @@
 				"required": true,
 				"description": "Koha internal report id",
 				"type": "integer"
-			}],
+			},{
+				"name": "params1",
+				"in": "query",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "params2",
+				"in": "query",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "params3",
+				"in": "query",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "params4",
+				"in": "query",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "params5",
+				"in": "query",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			}
+		],
 			"responses": {
 				"200": {
 					"description": "results",
