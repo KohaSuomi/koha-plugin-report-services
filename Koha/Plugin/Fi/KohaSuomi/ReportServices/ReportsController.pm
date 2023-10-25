@@ -15,6 +15,7 @@ package Koha::Plugin::Fi::KohaSuomi::ReportServices::ReportsController;
 # with Koha; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+use utf8;
 use Modern::Perl;
 use Mojo::Base 'Mojolicious::Controller';
 use C4::Context;
@@ -54,10 +55,16 @@ sub try_load {
     }
 }
 
+sub _d { my ($s) = @_; utf8::decode($s); $s }
+
+sub decode_keys {
+   my ($hash) = @_;
+   return { map { _d($_) => $hash->{$_} } keys(%$hash) };
+}
+
 sub getReportData {
   
     my ( $self, $args ) = @_;
-    my $cgi = $self->{'cgi'};
   
     my $CONFPATH = dirname($ENV{'KOHA_CONF'});
     my $KOHAPATH = C4::Context->config('intranetdir');
@@ -113,6 +120,8 @@ sub getReportData {
             
             $sth->execute();
             $ref = $sth->fetchall_arrayref({});
+            
+            $_ = decode_keys($_) for @$ref;
             
             $sth->finish();  
             $dbh->disconnect();
