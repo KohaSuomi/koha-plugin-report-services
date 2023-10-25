@@ -99,8 +99,6 @@ sub getReportData {
 
         if ( grep( /^$report_id$/, @allowed_report_idsarr ) ) {
             #report id configured in plugin config
-            $log->info("ReportServices API running report id " . $report_id);
-            $log->info("Params: " . Dumper(@sql_params));
             
             my $report = Koha::Reports->find( $report_id ); 
             
@@ -115,6 +113,8 @@ sub getReportData {
             my $type        = $report->type;
             
             ( $sql, undef ) = $report->prep_report( \@param_names, \@sql_params );
+            
+            $log->info("ReportServices API running SQL report: " . $sql);
 
             $sth = $dbh->prepare($sql);
             
@@ -125,6 +125,7 @@ sub getReportData {
             
             $sth->finish();  
             $dbh->disconnect();
+            $log->info("Finished with report id ". $report_id .". Passing result to endpoint.");
         }
         else {
             $log->error("Report id missing from Reportservices allowed reports config");
