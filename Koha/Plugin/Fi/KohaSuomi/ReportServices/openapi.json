@@ -16,31 +16,31 @@
 				"description": "Koha internal report id",
 				"type": "integer"
 			},{
-				"name": "params1",
+				"name": "param1",
 				"in": "query",
 				"required": false,
 				"description": "Parameter for parameter array passed to report",
 				"type": "string"
 			},{
-				"name": "params2",
+				"name": "param2",
 				"in": "query",
 				"required": false,
 				"description": "Parameter for parameter array passed to report",
 				"type": "string"
 			},{
-				"name": "params3",
+				"name": "param3",
 				"in": "query",
 				"required": false,
 				"description": "Parameter for parameter array passed to report",
 				"type": "string"
 			},{
-				"name": "params4",
+				"name": "param4",
 				"in": "query",
 				"required": false,
 				"description": "Parameter for parameter array passed to report",
 				"type": "string"
 			},{
-				"name": "params5",
+				"name": "param5",
 				"in": "query",
 				"required": false,
 				"description": "Parameter for parameter array passed to report",

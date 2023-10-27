@@ -89,11 +89,11 @@ sub getReportData {
         my $report_id = $c->validation->param('report_id');
         my (@param_names, @sql_params);
         
-        push(@sql_params,$c->validation->param('params1'));
-        push(@sql_params,$c->validation->param('params2'));
-        push(@sql_params,$c->validation->param('params3'));
-        push(@sql_params,$c->validation->param('params4'));
-        push(@sql_params,$c->validation->param('params5'));
+        push(@sql_params,$c->validation->param('param1'));
+        push(@sql_params,$c->validation->param('param2'));
+        push(@sql_params,$c->validation->param('param3'));
+        push(@sql_params,$c->validation->param('param4'));
+        push(@sql_params,$c->validation->param('param5'));
         
         
 
