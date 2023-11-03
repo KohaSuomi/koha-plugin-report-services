@@ -26,46 +26,50 @@ use Data::Dumper;
 use Log::Log4perl;
 use Koha::Reports;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices;
+use YAML::XS;
 
 my $dbh;
 
 my $module = 'C4::KohaSuomi::Tweaks';
 if (try_load($module)) {
-  warn "ReportServices C4::KohaSuomi::Tweaks loaded\n";
-  $dbh = C4::KohaSuomi::Tweaks->dbh();
-  
-} else {
-  warn "ReportServices C4::KohaSuomi::Tweaks not loaded\n";
-  $dbh = C4::Context->dbh();
+    warn "ReportServices C4::KohaSuomi::Tweaks loaded\n";
+    $dbh = C4::KohaSuomi::Tweaks->dbh();
+
+}
+else {
+    warn "ReportServices C4::KohaSuomi::Tweaks not loaded\n";
+    $dbh = C4::Context->dbh();
 }
 
 #This gets called from REST api
 
 sub try_load {
-  
+
     my $mod = shift;
 
     eval("use $mod");
 
     if ($@) {
-      #print "\$@ = $@\n";
-      return(0);
-    } else {
-      return(1);
+
+        #print "\$@ = $@\n";
+        return(0);
+    }
+    else {
+        return(1);
     }
 }
 
 sub _d { my ($s) = @_; utf8::decode($s); $s }
 
 sub decode_keys {
-   my ($hash) = @_;
-   return { map { _d($_) => $hash->{$_} } keys(%$hash) };
+    my ($hash) = @_;
+    return { map { _d($_) => $hash->{$_} } keys(%$hash) };
 }
 
 sub getReportData {
-  
+
     my ( $self, $args ) = @_;
-  
+
     my $CONFPATH = dirname($ENV{'KOHA_CONF'});
     my $KOHAPATH = C4::Context->config('intranetdir');
 
@@ -73,73 +77,117 @@ sub getReportData {
     my $log_conf = $CONFPATH . "/log4perl.conf";
     Log::Log4perl::init($log_conf);
     my $log = Log::Log4perl->get_logger('api');
-    
+
     my $c = shift->openapi->valid_input or return;
-    
+
+    my $authorization_header = $c->req->headers->authorization;
+    my $user;
+
+    my $server = Net::OAuth2::AuthorizationServer->new;
+    my $grant = $server->client_credentials_grant(Koha::OAuth::config);
+    my ($type, $token) = split / /, $authorization_header;
+    my ($valid_token, $error) = $grant->verify_access_token(access_token => $token,);
+
+    if ($valid_token) {
+        my $patron_id = Koha::ApiKeys->find( $valid_token->{client_id} )->patron_id;
+        $user      = Koha::Patrons->find($patron_id);
+    }
+    else {
+        # If we have "Authorization: Bearer" header and oauth authentication
+        # failed, do not try other authentication means
+        Koha::Exceptions::Authentication::Required->throw(error => 'Authentication failure.');
+    }
+
     my $sth;
     my $data;
     my $ref;
 
     return try {
-      
+
         my $allowed_report_ids = Koha::Plugin::Fi::KohaSuomi::ReportServices->new()->retrieve_data('allowed_report_ids');
-        
-        my @allowed_report_idsarr = $allowed_report_ids =~ /[^\s,]+/g;
-        
         my $report_id = $c->validation->param('report_id');
+
+        my %config = %{ Load($allowed_report_ids)};
+        #$log->info(Dumper(%config));
+        #$log->info(Dumper($config{$user->borrowernumber}));
+
+        if (exists $config{$user->borrowernumber}) {
+            #$log->info("Borrowernumber found in config");
+
+            if ( ( $report_id ~~ $config{$user->borrowernumber} ) ) {
+                #$log->info("Report id found in config");
+            }
+            else {
+                $log->error("Report id not found in config");
+
+                return $c->render(
+                    status  => 403,
+                    openapi => { error => "Forbidden" }
+                );
+            }
+        }
+        else {
+            $log->error("Borrowernumber not found in config");
+
+            return $c->render(
+                status  => 403,
+                openapi => { error => "Forbidden" }
+            );
+        }
+
+        #config ok
+
+        #$log->info(Dumper(%config));
+
         my (@param_names, @sql_params);
-        
+
         push(@sql_params,$c->validation->param('param1'));
         push(@sql_params,$c->validation->param('param2'));
         push(@sql_params,$c->validation->param('param3'));
         push(@sql_params,$c->validation->param('param4'));
         push(@sql_params,$c->validation->param('param5'));
-        
-        
 
-        if ( grep( /^$report_id$/, @allowed_report_idsarr ) ) {
-            #report id configured in plugin config
-            
-            my $report = Koha::Reports->find( $report_id ); 
-            
-            unless ($report) {
-                $log->error("No such report");
-                return $c->render( status  => 404,
-                            openapi => { error => "Data not found" } );
-            }
-          
-            my $sql         = $report->savedsql;
-            my $report_name = $report->report_name;
-            my $type        = $report->type;
-            
-            ( $sql, undef ) = $report->prep_report( \@param_names, \@sql_params );
-            
-            $log->info("ReportServices API running SQL report: " . $sql);
+        my $report = Koha::Reports->find( $report_id );
 
-            $sth = $dbh->prepare($sql);
-            
-            $sth->execute();
-            $ref = $sth->fetchall_arrayref({});
-            
-            $_ = decode_keys($_) for @$ref;
-            
-            $sth->finish();  
-            $dbh->disconnect();
-            $log->info("Finished with report id ". $report_id .". Passing result to endpoint.");
+        unless ($report) {
+            $log->error("No such report");
+            return $c->render(
+                status  => 404,
+                openapi => { error => "Data not found" }
+            );
         }
-        else {
-            $log->error("Report id missing from Reportservices allowed reports config");
-            return $c->render( status  => 403,
-                            openapi => { error => "Forbidden" } );
-        }
-        
+
+        my $sql         = $report->savedsql;
+        my $report_name = $report->report_name;
+        my $type        = $report->type;
+
+        ( $sql, undef ) = $report->prep_report( \@param_names, \@sql_params );
+
+        $log->info(("API user " . $user->borrowernumber). " " . $user->firstname . " " . $user->surname . " requested report: ReportServices API running SQL " . $sql . "\n");
+
+        $sth = $dbh->prepare($sql);
+
+        $sth->execute();
+        $ref = $sth->fetchall_arrayref({});
+
+        $_ = decode_keys($_) for @$ref;
+
+        $sth->finish();
+        $dbh->disconnect();
+
         unless ($ref) {
-            return $c->render( status  => 404,
-                            openapi => { error => "Data not found" } );
+            return $c->render(
+                status  => 404,
+                openapi => { error => "Data not found" }
+            );
         }
+
+        $log->info("Finished with report id ". $report_id .". Passing result to endpoint.");
 
         return $c->render( status => 200, openapi => $ref );
+
     }
+
     catch {
         $dbh->disconnect();
         $c->unhandled_exception($_);

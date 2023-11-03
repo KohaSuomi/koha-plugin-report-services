@@ -9,7 +9,7 @@
 
 <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Pluginit</a> &rsaquo; Raportteri &rsaquo; konfiguraatio</div>
 
-<div id="doc3">
+<div id="doc3" style="margin: 10px;">
     <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
     <h3>Raportteri: Konfiguraatio</h3>
 
@@ -21,13 +21,36 @@
 
         <p>
 
-        <label for="allowed_report_ids">Raporttirajapinnan /reportservices/report ajettavaksi sallittavat Kohan sql-raporttien id:t (pilkulla erotettuna): </label>
-        <input type="text" name="allowed_report_ids" value="[% allowed_report_ids %]" />
+        <label for="allowed_report_ids">Raporttirajapinnan /reportservices/report ajettavaksi sallittavat Kohan sql-raporttien id:t asiakas-id:n mukaan: </label>
+        </p>
+        <textarea style="margin: 10px;" id="yaml_config" cols="40" rows="18" name="allowed_report_ids">[% allowed_report_ids %]</textarea>
 
         <input type="hidden" name="save" value="1" />
 
         <input type="submit" value="Tallenna" />
     </form>
+    
+    <div>
+        <p>
+        <b>Konfiguroi yaml-muodossa seuraavasti:</b>
+        </p>
+        
+        <pre>---</pre>
+        <pre>[rajapintaa käyttävän api-asiakkaan asiakas-id/borrowernumber]:</pre>
+        <pre>  - [ajettavaksi sallittava raportti-id]</pre>
+        
+        <p>  
+            <b>Esimerkki:</b>
+            <pre>---</pre>
+            <pre>123456:</pre>
+            <pre>  - 512</pre>
+            <pre>  - 513</pre>
+            <pre>56890:</pre>
+            <pre>  - 620</pre>
+            <pre>  - 621</pre>
+            <pre>  - 625</pre>
+        </p>
+    </div>
 
     <hr/>
 
