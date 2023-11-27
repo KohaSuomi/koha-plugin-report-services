@@ -27,6 +27,7 @@ use Log::Log4perl;
 use Koha::Reports;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices;
 use YAML::XS;
+use Koha::OAuth;
 
 my $dbh;
 
