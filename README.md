@@ -37,7 +37,7 @@ The Koha REST API endpoint responds to GET requests and requires the following i
 
 1. The Koha API OAuth 2.0 access Token in the request header provided by /api/v1/oauth/token in exchange for the API keys configured to the correct API user.
    The API user/borrowernumber whose API keys are used to send the GET request needs the "use report plugins" permission in Koha to be able to send requests to the endpoint.
-2. The Koha internal report ID that Koha should produce JSON response data for in path
+2. The Koha internal report ID that Koha should produce JSON response data from in path
    
 Optional:
 
