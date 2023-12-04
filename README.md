@@ -45,7 +45,7 @@ param1, param2,param3,param4,param5: Parameters to be passed on to the Koha repo
 
 GET Example address using two optional parameters in the request, running Koha SQL report with id 53:   https://vaski-test.fi/api/v1/contrib/kohasuomi/reportservices/reports?report_id=53&param1=2022-04-11&param2=2023-11-15
 
-in Koha SQL report id 53: where (b.timestamp between <<Start Date|date>> and <<End Date|date>>) <--- these definable parameters would be replaced by the GET request's param1 and param2 in order of their appearance in the SQL statement so the report runs as:
+in Koha SQL report id 53: where (b.timestamp between <<Start Date|date>> and <<End Date|date>>) <--- these user definable parameters would be replaced by the GET request's param1 and param2 in order of their appearance in the SQL statement so the report runs as:
 
 ...where (b.timestamp between '2022-04-11' and '2023-11-15'.
 
