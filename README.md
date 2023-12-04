@@ -33,7 +33,7 @@ Once set up is complete you will need to alter your UseKohaPlugins system prefer
 
 # Using the REST API endpoint /api/v1/contrib/kohasuomi/reportservices/reports
 
-The Koha REST API endpoint responds to GET requests and requires the following in the request:
+The Koha REST API endpoint responds to GET requests and requires the following in the request in order to produce a response in JSON format:
 
 1. The Koha API OAuth 2.0 access Token in the request header provided by /api/v1/oauth/token in exchange for the API keys configured to the correct API user.
    The API user/borrowernumber whose API keys are used to send the GET request needs the "use report plugins" permission in Koha to be able to send requests to the endpoint.
