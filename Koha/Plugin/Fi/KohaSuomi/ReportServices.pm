@@ -84,9 +84,10 @@ sub configure {
         $self->output_html( $template->output() );
     }
     else {
+        my $allowed_report_ids = $cgi->param('allowed_report_ids');
         $self->store_data(
             {
-                allowed_report_ids => $cgi->param('allowed_report_ids'),
+                allowed_report_ids => $allowed_report_ids,
                 last_configured_by => C4::Context->userenv->{'number'},
             }
         );
