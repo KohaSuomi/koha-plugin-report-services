@@ -62,7 +62,7 @@ sub collect_report_data {
         my $json_obj = JSON->new();
         $json_obj->pretty unless !$pretty;
         my $json_data= $json_obj->encode(\@data_chunks);
-        print $json_data;
+        return $json_data;
     }
 }
 

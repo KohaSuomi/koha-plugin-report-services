@@ -33,7 +33,7 @@ use Koha::Plugins;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
-my ($limit, $timeperiod, $json, $pretty, $csv, $verbose);
+my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path);
 
 GetOptions(
     'h|help'       => \$help,
@@ -43,6 +43,7 @@ GetOptions(
     'pretty'       => \$pretty,
     'csv'          => \$csv,
     'v|verbose'    => \$verbose,
+    'p|path'       => \$path,
 );
 
 my $usage = << 'ENDUSAGE';
@@ -65,6 +66,8 @@ Script has the following parameters :
 
     -v --verbose        More chatty script.
 
+    -p --path           MANDATORY! File path for sftp.
+
 ENDUSAGE
 
 if ($help) {
@@ -72,4 +75,28 @@ if ($help) {
     exit;
 }
 
-Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $json, $pretty, $csv, $verbose);
+if(!$path) {
+    print "Define config file output path for sftp\n";
+    exit;
+}
+
+my $output_directory = $ARGV[0];
+
+if ( !-d $output_directory || !-w $output_directory ) {
+   print "ERROR: You must specify a valid and writeable directory to dump the print notices in.\n";
+   print $usage;
+   exit;
+}
+
+my $result = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $json, $pretty, $csv, $verbose);
+
+my $today = Koha::DateUtils::dt_from_string()->ymd;
+
+my $tmppath = $output_directory ."/tmp/";
+my $fileformat = $json ? ".json" : ".csv";
+my $filename = "koha_reportservice_".$today.$fileformat;
+
+open(my $fh, '>', $tmppath.$filename);
+print $fh $result;
+close $fh;
+print "Wrote report file ".$filename."\n";
