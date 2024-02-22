@@ -68,7 +68,7 @@ sub _get_chunk {
     FROM items i
     LEFT JOIN biblioitems bi ON (i.biblioitemnumber = bi.biblioitemnumber)
     LEFT JOIN biblio b ON (bi.biblionumber = b.biblionumber)
-    LEFT JOIN koha_plugin_fi_kohasuomi_okmstats_biblio_data_elements bde ON (b.biblionumber = bde.biblioitemnumber)
+    LEFT JOIN koha_plugin_fi_kohasuomi_okmstats_biblio_data_elements bde ON (b.biblionumber = bde.biblionumber)
     WHERE i.itemnumber >= ? AND i.itemnumber < ?";
 
     my $sth = $dbh->prepare($query);
