@@ -58,7 +58,7 @@ sub collect_report_data {
         }
     }
 
-    if($json){
+    if( @data_chunks && $json ){
         my $json_obj = JSON->new();
         $json_obj->pretty unless !$pretty;
         my $json_data= $json_obj->encode(\@data_chunks);

@@ -25,6 +25,7 @@ use open qw( :std :encoding(UTF-8) );
 binmode( STDOUT, ":encoding(UTF-8)" );
 
 use Getopt::Long;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 
 use C4::Context();
 
@@ -96,7 +97,29 @@ my $tmppath = $output_directory ."/tmp/";
 my $fileformat = $json ? ".json" : ".csv";
 my $filename = "koha_reportservice_".$today.$fileformat;
 
-open(my $fh, '>', $tmppath.$filename);
-print $fh $result;
-close $fh;
-print "Wrote report file ".$filename."\n";
+if( $result ){
+    open(my $fh, '>', $tmppath.$filename);
+    print $fh $result;
+    close $fh;
+    print "Wrote report file ".$filename."\n";
+
+    chdir $tmppath;
+    my @json_files = <*.json>;
+    my $zip = Archive::Zip->new();
+    my $zip_file = "koha_reportservice_".$today. ".zip";
+
+    foreach my $json_file (@json_files) {
+        $zip->addFile( $json_file );
+    }
+
+    unless ( $zip->writeToFileNamed($tmppath . $zip_file) == AZ_OK ) {
+        die 'error creating zip-file';
+    }
+
+    foreach my $json_file (@json_files) {
+        unlink $json_file;
+    }
+
+} else {
+    print "Found nothing to send!";
+}
