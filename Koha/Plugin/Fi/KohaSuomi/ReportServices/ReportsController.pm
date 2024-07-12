@@ -115,7 +115,7 @@ sub getReportData {
         if (exists $config{$user->borrowernumber}) {
             #$log->info("Borrowernumber found in config");
 
-            if ( ( $report_id ~~ $config{$user->borrowernumber} ) ) {
+            if ( ( grep( /^$report_id$/, @{$config{$user->borrowernumber}} ) ) ) {
                 #$log->info("Report id found in config");
             }
             else {
