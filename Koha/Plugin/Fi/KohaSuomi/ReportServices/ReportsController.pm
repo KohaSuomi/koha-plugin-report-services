@@ -81,26 +81,9 @@ sub getReportData {
 
     my $c = shift->openapi->valid_input or return;
 
-    my $authorization_header = $c->req->headers->authorization;
-    my $user;
-
-    my $server = Net::OAuth2::AuthorizationServer->new;
-    my $grant = $server->client_credentials_grant(Koha::OAuth::config);
-    my ($type, $token) = split / /, $authorization_header;
-    my ($valid_token, $error) = $grant->verify_access_token(access_token => $token,);
-
-    if ($valid_token) {
-        my $patron_id = Koha::ApiKeys->find( $valid_token->{client_id} )->patron_id;
-        $user      = Koha::Patrons->find($patron_id);
-    }
-    else {
-        # If we have "Authorization: Bearer" header and oauth authentication
-        # failed, do not try other authentication means
-        Koha::Exceptions::Authentication::Required->throw(error => 'Authentication failure.');
-    }
+    my $user = $c->stash('koha.user');
 
     my $sth;
-    my $data;
     my $ref;
 
     return try {
