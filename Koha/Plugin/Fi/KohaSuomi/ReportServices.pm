@@ -21,7 +21,7 @@ our $metadata = {
     minimum_version => '21.11',
     maximum_version => '',
     version         => $VERSION,
-    description     => 'Tilastojen keräämiseen ja lähettämiseen tarkoitettu plugin',
+    description     => 'Tilastojen keräämiseen ja lähettämiseen tarkoitettu plugin. (Paikalliskannat, vain tarvittaessa)',
 };
 
 ## This is the minimum code required for a plugin's 'new' method
