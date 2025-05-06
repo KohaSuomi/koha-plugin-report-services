@@ -42,7 +42,8 @@ use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue;
 sub collect_report_data {
     my ($limit, $timeperiod, $json, $pretty, $csv, $verbose) = @_;
 
-    my $chunker = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker->new(undef, $limit, undef, $verbose);
+    my ($startdate, $enddate) = set_timeperiod($timeperiod) if $timeperiod;
+    my $chunker = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker->new(undef, $limit, undef, $verbose, $startdate, $enddate);
 
     my @subject_fields = subject_fields();
     my $libraries = get_libraries();
@@ -146,6 +147,42 @@ sub get_locations {
         $locations_hash{$location->{authorised_value}} = $location->{lib};
     }
     return  \%locations_hash;
+}
+
+sub set_timeperiod {
+    my ($timeperiod) = @_;
+    my ($startDate, $endDate);
+
+    if ($timeperiod =~ /^(\d\d\d\d)-(\d\d)-(\d\d)([Tt ]\d\d:\d\d:\d\d)?(\s)?-(\s)?(\d\d\d\d)-(\d\d)-(\d\d)([Tt ]\d\d:\d\d:\d\d)?$/) {
+        #Make sure the values are correct by casting them into a DateTime
+        $startDate = DateTime->new(year => $1, month => $2, day => $3, time_zone => C4::Context->tz());
+        $endDate = DateTime->new(year => $7, month => $8, day => $9, time_zone => C4::Context->tz());
+    } elsif ($timeperiod =~ 'lastmonth') {
+        $startDate = DateTime->now(time_zone => C4::Context->tz())->subtract(months => 1)->set_day(1);
+        $endDate = DateTime->last_day_of_month( year => $startDate->year(),
+                                                month => $startDate->month(),
+                                                time_zone => $startDate->time_zone(),
+                                              ) if $startDate;
+    } elsif ( $timeperiod eq "yesterday" ){
+        $startDate = DateTime->now(time_zone => C4::Context->tz())->subtract(days => 1);
+        $endDate = DateTime->now(time_zone => C4::Context->tz())->subtract(days => 1);
+    }
+
+    if ($startDate && $endDate) {
+        #Check if startdate is smaller than enddate, if not fix it.
+        if (DateTime->compare($startDate, $endDate) == 1) {
+            my $temp = $startDate;
+            $startDate = $endDate;
+            $endDate = $temp;
+        }
+
+        #Make sure the HMS portion also starts from 0 and ends at the end of day. The DB usually does timeformat casting in such a way that missing
+        #complete DATETIME elements causes issues when they are automaticlly set to 0.
+        $startDate->truncate(to => 'day');
+        $endDate->set_hour(23)->set_minute(59)->set_second(59);
+        return ($startDate, $endDate);
+    }
+
 }
 
 1;

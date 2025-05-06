@@ -53,7 +53,7 @@ sub subject_added_entries {
         my $tag = $field->tag;
         if(grep( /^$tag$/, @$subject_fields )){
             my $entry = $field->subfield('a');
-            push @entries, $entry;
+            push @entries, $entry if $entry;
         }
     }
     $subject_added_entries = join(';', @entries) unless !@entries;
@@ -75,8 +75,10 @@ sub is_floating {
         my $validate_float = Koha::Libraries->find( $item->{homebranch} )->validate_float_sibling({ branchcode => $library });
         return 1 if $hbr eq "returnbylibrarygroup" && $validate_float;
 
-        my $validate_floatrules = C4::Circulation::_validate_floatrules({ barcode => $item->{barcode}, branch => $library });
-        return 1 if $validate_floatrules && $validate_floatrules eq "float";
+        if ($item->{barcode}){
+            my $validate_floatrules = C4::Circulation::_validate_floatrules({ barcode => $item->{barcode}, branch => $library });
+            return 1 if $validate_floatrules && $validate_floatrules eq "float";
+        }
     }
 
     return 0;

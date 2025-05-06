@@ -30,7 +30,7 @@ ItemChunker is based on BiblioChunker made for Vaara-kirjastot 2015.
 =cut
 
 sub new {
-    my ($class, $starting_itemnumber, $ending_itemnumber, $page_size, $verbose) = @_;
+    my ($class, $starting_itemnumber, $ending_itemnumber, $page_size, $verbose, $startdate, $enddate) = @_;
     my $self = {};
     $self->{starting_itemnumber} = $starting_itemnumber || 0;
     $self->{ending_itemnumber} = $ending_itemnumber || 99999999999;
@@ -41,6 +41,8 @@ sub new {
         page => 1,
     };
     $self->{verbose} = $verbose || 0;
+    $self->{startdate} = $startdate;
+    $self->{enddate} = $enddate;
     bless($self, $class);
     return $self;
 }
@@ -70,9 +72,15 @@ sub _get_chunk {
     LEFT JOIN biblio b ON (bi.biblionumber = b.biblionumber)
     LEFT JOIN koha_plugin_fi_kohasuomi_okmstats_biblio_data_elements bde ON (b.biblionumber = bde.biblionumber)
     WHERE i.itemnumber >= ? AND i.itemnumber < ?";
+    $query .= " AND (i.timestamp BETWEEN ? AND ?
+    OR b.timestamp BETWEEN ? AND ?)" if $self->{startdate} && $self->{enddate};
 
     my $sth = $dbh->prepare($query);
-    $sth->execute( $self->_get_position() );
+    my @params = ();
+    push @params, $self->_get_position();
+    push @params, $self->{startdate}, $self->{enddate}, $self->{startdate}, $self->{enddate} if $self->{startdate} && $self->{enddate};
+
+    $sth->execute( @params );
     if ($sth->err) {
         die $cc[3]."():> ".$sth->errstr;
     }
@@ -118,7 +126,7 @@ sub _get_next_id {
     my $dbh = C4::Context->dbh();
     my $sth = $dbh->prepare("SELECT MIN(itemnumber) FROM items WHERE itemnumber > ?");
     my @pos = $self->_get_position();
-    $sth->execute( $pos[0] );
+    $sth->execute( $pos[1] );
     if ($sth->err) {
         my @cc = caller(0);
         die $cc[3]."():> ".$sth->errstr;

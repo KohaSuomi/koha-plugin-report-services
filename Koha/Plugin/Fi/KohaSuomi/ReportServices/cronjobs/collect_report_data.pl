@@ -28,6 +28,7 @@ use Getopt::Long;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 
 use C4::Context();
+use C4::KohaSuomi::SFTP;
 
 use Koha::Plugins;
 
@@ -37,14 +38,14 @@ my $help;
 my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path);
 
 GetOptions(
-    'h|help'       => \$help,
-    'l|limit:i'    => \$limit,
-    't|timeperiod' => \$timeperiod,
-    'json'         => \$json,
-    'pretty'       => \$pretty,
-    'csv'          => \$csv,
-    'v|verbose'    => \$verbose,
-    'p|path'       => \$path,
+    'h|help'         => \$help,
+    'l|limit:i'      => \$limit,
+    't|timeperiod:s' => \$timeperiod,
+    'json'           => \$json,
+    'pretty'         => \$pretty,
+    'csv'            => \$csv,
+    'v|verbose'      => \$verbose,
+    'p|path=s'       => \$path,
 );
 
 my $usage = << 'ENDUSAGE';
@@ -57,7 +58,10 @@ Script has the following parameters :
 
     -l --limit          An SQL LIMIT -clause for testing purposes
 
-    -t --timeperiod     In months (not in use yet).
+    -t --timeperiod     The timeperiod definition. Supported formats are:
+                        -"yesterday": whole previous day
+                        - "lastmonth": whole previous month
+                        -"YYYY-MM-DD-YYYY-MM-DD": start to end, inclusive
 
     --json              Build .json file
 
@@ -67,7 +71,7 @@ Script has the following parameters :
 
     -v --verbose        More chatty script.
 
-    -p --path           MANDATORY! File path for sftp.
+    -p --path           MANDATORY! File path for sftp config.
 
 ENDUSAGE
 
@@ -93,7 +97,12 @@ my $result = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService
 
 my $today = Koha::DateUtils::dt_from_string()->ymd;
 
-my $tmppath = $output_directory ."/tmp/";
+my $configfile = eval { YAML::XS::LoadFile($path) };
+exit unless $configfile;
+
+my $tmppath = $output_directory ."tmp/";
+my $archivepath = $output_directory.'archived/';
+
 my $fileformat = $json ? ".json" : ".csv";
 my $filename = "koha_reportservice_".$today.$fileformat;
 
@@ -120,6 +129,12 @@ if( $result ){
         unlink $json_file;
     }
 
+    my @zipfiles = <*.zip>;
+
+    my ( $succes ) = C4::KohaSuomi::SFTP::sftp_transfer( \@zipfiles, $configfile, $tmppath, $archivepath );
+    if( $succes ) {
+        print "File ".$filename." send!";
+    }
 } else {
     print "Found nothing to send!";
 }
