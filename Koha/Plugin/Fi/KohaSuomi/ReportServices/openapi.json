@@ -108,6 +108,118 @@
 					"plugins": "report"
 				}
 			}
+		},
+		"post": {
+			"x-mojo-to": "Fi::KohaSuomi::ReportServices::ReportsController#getReportData",
+			"operationId": "postReportJSON",
+			"tags": [
+				"jsonreport"
+			],
+			"consumes": [
+				"application/x-www-form-urlencoded"
+			],
+			"produces": [
+				"application/json"
+			],
+			"parameters": [{
+				"name": "report_id",
+				"in": "formData",
+				"required": true,
+				"description": "Koha internal report id",
+				"type": "integer"
+			},{
+				"name": "param1",
+				"in": "formData",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "param2",
+				"in": "formData",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "param3",
+				"in": "formData",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "param4",
+				"in": "formData",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			},{
+				"name": "param5",
+				"in": "formData",
+				"required": false,
+				"description": "Parameter for parameter array passed to report",
+				"type": "string"
+			}
+		],
+			"responses": {
+				"200": {
+					"description": "results",
+					"schema": {
+						"type": "array"
+					}
+				},
+				"403": {
+					"description": "Access forbidden",
+					"schema": {
+						"type": "object",
+						"properties": {
+							"error": {
+								"description": "Error message",
+								"type": "string"
+							}
+						}
+					}
+				},
+				"404": {
+					"description": "Data not found",
+					"schema": {
+						"type": "object",
+						"properties": {
+							"error": {
+								"description": "Error message",
+								"type": "string"
+							}
+						}
+					}
+				},
+				"500": {
+					"description": "Internal error",
+					"schema": {
+						"type": "object",
+						"properties": {
+							"error": {
+								"description": "Error message",
+								"type": "string"
+							}
+						}
+					}
+				},
+				"503": {
+					"description": "Under maintenance",
+					"schema": {
+						"type": "object",
+						"properties": {
+							"error": {
+								"description": "Error message",
+								"type": "string"
+							}
+						}
+					}
+				}		
+			},
+			"x-koha-authorization": {
+				"permissions": {
+					"plugins": "report"
+				}
+			}
 		}
 	}
 }
