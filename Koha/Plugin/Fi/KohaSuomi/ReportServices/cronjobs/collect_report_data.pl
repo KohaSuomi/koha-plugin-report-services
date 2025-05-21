@@ -101,7 +101,8 @@ my $result = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService
 my $today = Koha::DateUtils::dt_from_string()->ymd;
 
 my $configfile = eval { YAML::XS::LoadFile($path) };
-exit unless $configfile;
+print "Could not find config file from path ".$path."!\n" unless $configfile;
+exit;
 
 my $tmppath = $output_directory ."tmp/";
 my $archivepath = $output_directory.'archived/';
