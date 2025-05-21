@@ -35,7 +35,7 @@ use Koha::Plugins;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
-my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path);
+my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path, $test);
 
 GetOptions(
     'h|help'         => \$help,
@@ -46,6 +46,7 @@ GetOptions(
     'csv'            => \$csv,
     'v|verbose'      => \$verbose,
     'p|path=s'       => \$path,
+    'test'         => \$test
 );
 
 my $usage = << 'ENDUSAGE';
@@ -72,6 +73,8 @@ Script has the following parameters :
     -v --verbose        More chatty script.
 
     -p --path           MANDATORY! File path for sftp config.
+
+    --test           Mark data send as test data.
 
 ENDUSAGE
 
@@ -104,7 +107,7 @@ my $tmppath = $output_directory ."tmp/";
 my $archivepath = $output_directory.'archived/';
 
 my $fileformat = $json ? ".json" : ".csv";
-my $filename = "koha_reportservice_".$today.$fileformat;
+my $filename = $test ? "test_koha_reportservice_".$today.$fileformat : "koha_reportservice_".$today.$fileformat;
 
 if( $result ){
     open(my $fh, '>', $tmppath.$filename);
@@ -115,7 +118,7 @@ if( $result ){
     chdir $tmppath;
     my @json_files = <*.json>;
     my $zip = Archive::Zip->new();
-    my $zip_file = "koha_reportservice_".$today. ".zip";
+    my $zip_file = $test ? "test_koha_reportservice_".$today. ".zip" : "koha_reportservice_".$today. ".zip";
 
     foreach my $json_file (@json_files) {
         $zip->addFile( $json_file );
@@ -133,7 +136,7 @@ if( $result ){
 
     my ( $succes ) = C4::KohaSuomi::SFTP::sftp_transfer( \@zipfiles, $configfile, $tmppath, $archivepath );
     if( $succes ) {
-        print "File ".$filename." send!";
+        print "File ".$filename." send!\n";
     }
 } else {
     print "Found nothing to send!";
