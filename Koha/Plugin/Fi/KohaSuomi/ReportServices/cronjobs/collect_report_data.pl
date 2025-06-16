@@ -35,7 +35,7 @@ use Koha::Plugins;
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 
 my $help;
-my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path, $test);
+my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $path, $test, $confirm);
 
 GetOptions(
     'h|help'         => \$help,
@@ -46,7 +46,8 @@ GetOptions(
     'csv'            => \$csv,
     'v|verbose'      => \$verbose,
     'p|path=s'       => \$path,
-    'test'         => \$test
+    'test'           => \$test,
+    'confirm|c'      => \$confirm
 );
 
 my $usage = << 'ENDUSAGE';
@@ -74,7 +75,9 @@ Script has the following parameters :
 
     -p --path           MANDATORY! File path for sftp config.
 
-    --test           Mark data send as test data.
+    --test              Mark data send as test data.
+
+    -c --confirm        Confirm you want to send data.
 
 ENDUSAGE
 
@@ -113,7 +116,7 @@ my $archivepath = $output_directory.'archived/';
 my $fileformat = $json ? ".json" : ".csv";
 my $filename = $test ? "test_koha_reportservice_".$today.$fileformat : "koha_reportservice_".$today.$fileformat;
 
-if( $result ){
+if( $result && $confirm ){
     open(my $fh, '>', $tmppath.$filename);
     print $fh $result;
     close $fh;
@@ -142,6 +145,8 @@ if( $result ){
     if( $succes ) {
         print "File ".$filename." send!\n";
     }
+} elsif (!$confirm) {
+    print "You need to confirm you want to send data!\n";
 } else {
-    print "Found nothing to send!";
+    print "Found nothing to send!\n";
 }
