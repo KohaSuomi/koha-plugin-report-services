@@ -64,7 +64,7 @@ sub _get_chunk {
         return undef;
     }
     my $dbh = C4::Context->dbh();
-    my $query = "SELECT i.itemnumber, i.biblionumber, i.homebranch, i.location, i.notforloan,
+    my $query = "SELECT i.itemnumber, i.biblionumber, i.homebranch, i.location, i.notforloan, i.itype,
     i.holdingbranch, i.datelastseen, i.cn_sort, i.price, i.issues as issues_total, i.dateaccessioned,
     i.barcode, bi.isbn, b.title, b.author, b.copyrightdate, bde.primary_language, bde.itemtype, bde.cn_class
     FROM items i

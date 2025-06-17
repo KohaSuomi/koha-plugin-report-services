@@ -83,7 +83,10 @@ sub create_data_chunk {
     $item->{checked_out_count} = $collection->times_checked_out($item->{itemnumber});
 
     my @libraries = keys %$libraries;
-    $item->{floats} = $collection->is_floating($item, \@libraries);
+    my $koha_item = Koha::Items->find({ barcode => $item->{barcode} });
+
+    $item->{floats} = $collection->is_floating_by_float_groups($koha_item, \@libraries);
+    $item->{floats} = $collection->is_floating_by_float_rules($koha_item, \@libraries) unless $item->{floats};
 
     # Collect library name, itemtype description etc.
     $item->{homebranch_pre} = $libraries->{$item->{homebranch}}->{branchname};
