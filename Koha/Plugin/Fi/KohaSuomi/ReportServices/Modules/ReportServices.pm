@@ -20,6 +20,8 @@ package Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices;
 # along with Koha; if not, see <http://www.gnu.org/licenses>.
 
 use Modern::Perl;
+use open qw( :std :encoding(UTF-8) );
+binmode( STDOUT, ":encoding(UTF-8)" );
 use Carp;
 
 use Data::Dumper;
@@ -40,7 +42,7 @@ use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collect
 use Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue;
 
 sub collect_report_data {
-    my ($limit, $timeperiod, $json, $pretty, $csv, $verbose) = @_;
+    my ($limit, $timeperiod, $json, $pretty, $csv, $verbose, $tmppath, $filename) = @_;
 
     my ($startdate, $enddate) = set_timeperiod($timeperiod) if $timeperiod;
     my $chunker = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::Chunker->new(undef, $limit, undef, $verbose, $startdate, $enddate);
@@ -50,21 +52,27 @@ sub collect_report_data {
     my $itemtypes = get_itemtypes();
     my $shelving_locations = get_locations();
 
-    my @data_chunks = ();
+    my $json_file = $tmppath.$filename;
+
+    my $json_data = [];
+
+    open my $fh, '<', $json_file;
+    my $json_text = <$fh>;
+    close $fh;
+    $json_data = decode_json($json_text) if $json_text;
 
     while (my $items = $chunker->get_chunk(undef, $limit)) {
         foreach my $item (@$items) {
             my $data_chunk = create_data_chunk($item, \@subject_fields, $libraries, $itemtypes, $shelving_locations);
-            push @data_chunks, $data_chunk;
+            push @$json_data, $data_chunk;
         }
+        open(my $fh, '>', $json_file);
+
+        print $fh encode_json($json_data);
+        close $fh;
     }
 
-    if( @data_chunks && $json ){
-        my $json_obj = JSON->new();
-        $json_obj->pretty unless !$pretty;
-        my $json_data= $json_obj->encode(\@data_chunks);
-        return $json_data;
-    }
+    return 1;
 }
 
 sub create_data_chunk {

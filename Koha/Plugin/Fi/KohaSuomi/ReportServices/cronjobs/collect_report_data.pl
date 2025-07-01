@@ -99,8 +99,6 @@ if ( !-d $output_directory || !-w $output_directory ) {
    exit;
 }
 
-my $result = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $json, $pretty, $csv, $verbose);
-
 my $today = Koha::DateUtils::dt_from_string()->ymd;
 
 my $configfile = eval { YAML::XS::LoadFile($path) };
@@ -116,11 +114,12 @@ my $archivepath = $output_directory.'archived/';
 my $fileformat = $json ? ".json" : ".csv";
 my $filename = $test ? "test_koha_reportservice_".$today.$fileformat : "koha_reportservice_".$today.$fileformat;
 
+open(my $fh, '>', $tmppath.$filename);
+print "Wrote report file ".$filename."\n";
+
+my $result = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportServices::collect_report_data($limit, $timeperiod, $json, $pretty, $csv, $verbose, $tmppath, $filename);
+
 if( $result ){
-    open(my $fh, '>', $tmppath.$filename);
-    print $fh $result;
-    close $fh;
-    print "Wrote report file ".$filename."\n";
 
     chdir $tmppath;
     my @json_files = <*.json>;
