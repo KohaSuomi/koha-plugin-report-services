@@ -116,7 +116,7 @@ my $archivepath = $output_directory.'archived/';
 my $fileformat = $json ? ".json" : ".csv";
 my $filename = $test ? "test_koha_reportservice_".$today.$fileformat : "koha_reportservice_".$today.$fileformat;
 
-if( $result && $confirm ){
+if( $result ){
     open(my $fh, '>', $tmppath.$filename);
     print $fh $result;
     close $fh;
@@ -141,12 +141,14 @@ if( $result && $confirm ){
 
     my @zipfiles = <*.zip>;
 
-    my ( $succes ) = C4::KohaSuomi::SFTP::sftp_transfer( \@zipfiles, $configfile, $tmppath, $archivepath );
-    if( $succes ) {
-        print "File ".$filename." send!\n";
+    if($confirm){
+        my ( $succes ) = C4::KohaSuomi::SFTP::sftp_transfer( \@zipfiles, $configfile, $tmppath, $archivepath );
+        if( $succes ) {
+            print "File ".$filename." send!\n";
+        }
+    } else {
+        print "You need to confirm you want to send data!\n";
     }
-} elsif (!$confirm) {
-    print "You need to confirm you want to send data!\n";
 } else {
     print "Found nothing to send!\n";
 }
