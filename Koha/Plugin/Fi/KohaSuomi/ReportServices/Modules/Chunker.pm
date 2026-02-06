@@ -30,14 +30,22 @@ ItemChunker is based on BiblioChunker made for Vaara-kirjastot 2015.
 =cut
 
 sub new {
-    my ($class, $starting_itemnumber, $ending_itemnumber, $page_size, $verbose, $startdate, $enddate) = @_;
+    my ($class, $starting_position, $limit, $chunk_size, $verbose, $startdate, $enddate) = @_;
     my $self = {};
-    $self->{starting_itemnumber} = $starting_itemnumber || 0;
-    $self->{ending_itemnumber} = $ending_itemnumber || 99999999999;
-    $self->{page_size} = $page_size  || 10000;
+
+    my $items_count = Koha::Items->search()->count();
+
+    $self->{starting_position} = $starting_position || 0;
+    $self->{limit} = $limit || $items_count;
+
+    $chunk_size = 10000 unless $chunk_size;
+    # unless chunk_size is greater than limit use limit as chunk_size
+    $chunk_size = $limit unless !$limit || $chunk_size <= $limit;
+
+    $self->{chunk_size} = $chunk_size;
     $self->{position} = {
-        start => $self->{starting_itemnumber},
-        end => $self->{starting_itemnumber} + $self->{page_size},
+        start => $self->{starting_position},
+        end => $self->{starting_position} + $self->{chunk_size},
         page => 1,
     };
     $self->{verbose} = $verbose || 0;
@@ -70,15 +78,15 @@ sub _get_chunk {
     FROM items i
     LEFT JOIN biblioitems bi ON (i.biblioitemnumber = bi.biblioitemnumber)
     LEFT JOIN biblio b ON (bi.biblionumber = b.biblionumber)
-    LEFT JOIN koha_plugin_fi_kohasuomi_okmstats_biblio_data_elements bde ON (b.biblionumber = bde.biblionumber)
-    WHERE i.itemnumber >= ? AND i.itemnumber < ?";
-    $query .= " AND (i.timestamp BETWEEN ? AND ?
+    LEFT JOIN koha_plugin_fi_kohasuomi_okmstats_biblio_data_elements bde ON (b.biblionumber = bde.biblionumber)";
+    $query .= " WHERE (i.timestamp BETWEEN ? AND ?
     OR b.timestamp BETWEEN ? AND ?)" if $self->{startdate} && $self->{enddate};
+    $query .= " LIMIT ?, ?";
 
     my $sth = $dbh->prepare($query);
     my @params = ();
-    push @params, $self->_get_position();
     push @params, $self->{startdate}, $self->{enddate}, $self->{startdate}, $self->{enddate} if $self->{startdate} && $self->{enddate};
+    push @params, $self->_get_position();
 
     $sth->execute( @params );
     if ($sth->err) {
@@ -104,43 +112,22 @@ sub _get_chunk {
 
 sub _get_position {
     my ($self) = @_;
-    return ($self->{position}->{start}, $self->{position}->{end});
+    return ($self->{position}->{start}, $self->{chunk_size});
 }
 
 sub _increment_position {
-    my ($self, $new_start) = @_;
-    if ($new_start) {
-        $self->{position}->{start} = $new_start;
-        $self->{position}->{end}   = $self->{position}->{start} + $self->{page_size};
-    }
-    else {
-        $self->{position}->{start} += $self->{page_size};
-        $self->{position}->{end}   += $self->{page_size};
-    }
-    $self->{position}->{page}++;
-}
-
-sub _get_next_id {
     my ($self) = @_;
-
-    my $dbh = C4::Context->dbh();
-    my $sth = $dbh->prepare("SELECT MIN(itemnumber) FROM items WHERE itemnumber > ?");
-    my @pos = $self->_get_position();
-    $sth->execute( $pos[1] );
-    if ($sth->err) {
-        my @cc = caller(0);
-        die $cc[3]."():> ".$sth->errstr;
-    }
-    my ($itemnumber) = $sth->fetchrow();
-    return $itemnumber;
+    $self->{position}->{start} += $self->{chunk_size};
+    $self->{position}->{end}  += $self->{chunk_size};
+    $self->{position}->{page}++;
 }
 
 sub _is_chunk_within_bounds {
     my ($self) = @_;
 
-    if ($self->{ending_itemnumber} < $self->{position}->{end}) {
-        if ($self->{ending_itemnumber} > ($self->{position}->{end} - $self->{page_size})) {
-            $self->{position}->{end} = $self->{ending_itemnumber};
+    if ($self->{limit} < $self->{position}->{end}) {
+        if ($self->{limit} > ($self->{position}->{end} - $self->{chunk_size})) {
+            $self->{position}->{end} = $self->{limit};
             return 1;
         }
         else {

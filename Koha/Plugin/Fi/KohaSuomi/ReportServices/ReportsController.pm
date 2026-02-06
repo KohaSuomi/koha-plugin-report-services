@@ -157,7 +157,6 @@ sub getReportData {
         $_ = decode_keys($_) for @$ref;
 
         $sth->finish();
-        $dbh->disconnect();
 
         unless ($ref) {
             return $c->render(
@@ -173,7 +172,6 @@ sub getReportData {
     }
 
     catch {
-        $dbh->disconnect();
         $c->unhandled_exception($_);
     }
 }
