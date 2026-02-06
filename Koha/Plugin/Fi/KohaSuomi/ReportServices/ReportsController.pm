@@ -77,7 +77,7 @@ sub getReportData {
     # Initialize Logger
     my $log_conf = $CONFPATH . "/log4perl.conf";
     Log::Log4perl::init($log_conf);
-    my $log = Log::Log4perl->get_logger('api');
+    my $log = Log::Log4perl->get_logger('reporter');
 
     my $c = shift->openapi->valid_input or return;
 
