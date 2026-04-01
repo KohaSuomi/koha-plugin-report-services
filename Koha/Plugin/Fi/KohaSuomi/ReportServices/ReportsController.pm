@@ -125,11 +125,11 @@ sub getReportData {
 
         my (@param_names, @sql_params);
 
-        push(@sql_params,$c->validation->param('param1'));
-        push(@sql_params,$c->validation->param('param2'));
-        push(@sql_params,$c->validation->param('param3'));
-        push(@sql_params,$c->validation->param('param4'));
-        push(@sql_params,$c->validation->param('param5'));
+        # Only add defined parameters to avoid passing undef values
+        for my $i (1..5) {
+            my $param = $c->validation->param("param$i");
+            push(@sql_params, $param) if defined $param;
+        }
 
         my $report = Koha::Reports->find( $report_id );
 
@@ -149,9 +149,10 @@ sub getReportData {
 
         $log->info(("API user " . $user->borrowernumber). " " . $user->firstname . " " . $user->surname . " requested report: ReportServices API running Report with id " . $report_id . "\n");
 
-        $sth = $dbh->prepare($sql);
-
-        $sth->execute();
+        $sth = $dbh->prepare($sql) or die "Failed to prepare SQL for report $report_id: " . $dbh->errstr;
+        
+        $sth->execute() or die "Failed to execute SQL for report $report_id: " . $sth->errstr;
+        
         $ref = $sth->fetchall_arrayref({});
 
         $_ = decode_keys($_) for @$ref;
@@ -172,6 +173,7 @@ sub getReportData {
     }
 
     catch {
+        $log->error("Error while running report: $_");
         $c->unhandled_exception($_);
     }
 }
