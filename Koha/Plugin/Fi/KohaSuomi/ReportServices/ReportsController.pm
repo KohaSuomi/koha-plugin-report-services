@@ -125,11 +125,11 @@ sub getReportData {
 
         my (@param_names, @sql_params);
 
-        # Only add defined parameters to avoid passing undef values
-        for my $i (1..5) {
-            my $param = $c->validation->param("param$i");
-            push(@sql_params, $param) if defined $param;
-        }
+        push(@sql_params,$c->validation->param('param1'));
+        push(@sql_params,$c->validation->param('param2'));
+        push(@sql_params,$c->validation->param('param3'));
+        push(@sql_params,$c->validation->param('param4'));
+        push(@sql_params,$c->validation->param('param5'));
 
         my $report = Koha::Reports->find( $report_id );
 
