@@ -29,35 +29,31 @@ use Koha::Plugin::Fi::KohaSuomi::ReportServices;
 use YAML::XS;
 use Koha::OAuth;
 
-my $dbh;
-
-my $module = 'C4::KohaSuomi::Tweaks';
-if (try_load($module)) {
-    warn "ReportServices C4::KohaSuomi::Tweaks loaded\n";
-    $dbh = C4::KohaSuomi::Tweaks->dbh();
-
-}
-else {
-    warn "ReportServices C4::KohaSuomi::Tweaks not loaded\n";
-    $dbh = C4::Context->dbh();
-}
-
 #This gets called from REST api
+
+sub _dbh {
+    my $module = 'C4::KohaSuomi::Tweaks';
+
+    return $module->dbh() if try_load($module);
+
+    return C4::Context->dbh();
+}
 
 sub try_load {
 
     my $mod = shift;
 
-    eval("use $mod");
+    ( my $file = $mod ) =~ s{::}{/}g;
+    $file .= '.pm';
 
-    if ($@) {
+    my $loaded = eval {
+        require $file;
+        1;
+    };
 
-        #print "\$@ = $@\n";
-        return(0);
-    }
-    else {
-        return(1);
-    }
+    return $loaded if $loaded;
+
+    return;
 }
 
 sub _d { my ($s) = @_; utf8::decode($s); $s }
