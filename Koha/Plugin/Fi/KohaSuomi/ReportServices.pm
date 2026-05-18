@@ -12,30 +12,32 @@ use utf8;
 ## Here we set our plugin version
 our $VERSION = "1.0.1";
 
-my $lang = C4::Languages::getlanguage() || 'en';
-my $name = "";
-my $description = "";
-if ( $lang eq 'sv-SE' ) {
-    $name = "Rapporteringstjänst";
-    $description = "Ett plugin för insamling och överföring av statistikdata från Koha till en extern rapporteringstjänst. (Lokala databaser, endast vid behov)";
-} elsif ( $lang eq 'fi-FI' ) {
-    $name = "Raportointi palvelu";
-    $description = "Plugin tilastotietojen keräämiseen ja lähettämiseen Kohasta ulkoiseen raportointipalveluun. (Paikalliskannat, vain tarvittaessa)";
-} else {
-    $name = "Report Service";
-    $description = "A plugin for collecting and sending statistical data from Koha to an external reporting service.";
-}
-
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
-    name            => $name,
     author          => 'Lari Strand, Emmi Takkinen',
     date_authored   => '2022-10-07',
     date_updated    => '2025-11-06',
     minimum_version => '21.11',
     maximum_version => '',
     version         => $VERSION,
-    description     => $description,
+};
+
+sub get_localized_metadata {
+    my ($self) = @_;
+    my $lang = C4::Languages::getlanguage() || 'en';
+    my ($name, $description);
+
+    if ( $lang eq 'sv-SE' ) {
+        $name = "Rapporteringstjänst";
+        $description = "Ett plugin för insamling och överföring av statistikdata från Koha till en extern rapporteringstjänst. (Lokala databaser, endast vid behov)";
+    } elsif ( $lang eq 'fi-FI' ) {
+        $name = "Raportointi palvelu";
+        $description = "Plugin tilastotietojen keräämiseen ja lähettämiseen Kohasta ulkoiseen raportointipalveluun. (Paikalliskannat, vain tarvittaessa)";
+    } else {
+        $name = "Report Service";
+        $description = "A plugin for collecting and sending statistical data from Koha to an external reporting service.";
+    }
+    return ($name, $description);
 };
 
 ## This is the minimum code required for a plugin's 'new' method
@@ -51,6 +53,10 @@ sub new {
     ## This runs some additional magic and checking
     ## and returns our actual 
     my $self = $class->SUPER::new($args);
+
+    my ($name, $description) = $self->get_localized_metadata();
+    $self->{'metadata'}->{'name'} = $name;
+    $self->{'metadata'}->{'description'} = $description;
 
     return $self;
 }
