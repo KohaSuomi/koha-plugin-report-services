@@ -146,13 +146,27 @@ sub getReportData {
         $log->info(("API user " . $user->borrowernumber). " " . $user->firstname . " " . $user->surname . " requested report: ReportServices API running Report with id " . $report_id . "\n");
 
         my $dbh = _dbh();
+        
+        # Validate connection before executing query (important for replica databases)
+        unless ($dbh && $dbh->ping()) {
+            $log->error("Database connection failed or lost for report $report_id");
+            return $c->render(
+                status  => 503,
+                openapi => { error => "Connection unavailable" }
+            );
+        }
+        
         $sth = $dbh->prepare($sql) or die "Failed to prepare SQL for report $report_id: " . $dbh->errstr;
         
         $sth->execute() or die "Failed to execute SQL for report $report_id: " . $sth->errstr;
         
-        $ref = $sth->fetchall_arrayref({});
-
-        $_ = decode_keys($_) for @$ref;
+        # Fetch row-by-row instead of all at once to avoid memory issues
+        # and reduce time window for connection timeouts on large result sets
+        my @results;
+        while (my $row = $sth->fetchrow_hashref()) {
+            push @results, decode_keys($row);
+        }
+        $ref = \@results;
 
         $sth->finish();
 
