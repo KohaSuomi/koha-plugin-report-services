@@ -147,9 +147,14 @@ sub getReportData {
         my $page = $c->validation->param('_page');
         my $per_page = $c->validation->param('_per_page');
 
-        if ($page && $per_page) {
-            my $offset = ($page - 1) * $per_page;
-            $sql .= " LIMIT $per_page OFFSET $offset";
+        if (defined $page && defined $per_page) {
+            $page     = int($page);
+            $per_page = int($per_page);
+
+            if ($page > 0 && $per_page > 0) {
+                my $offset = ($page - 1) * $per_page;
+                $sql .= sprintf(' LIMIT %d OFFSET %d', $per_page, $offset);
+            }
         }
 
         $log->info(("API user " . $user->borrowernumber). " " . $user->firstname . " " . $user->surname . " requested report: ReportServices API running Report with id " . $report_id . "\n");
