@@ -142,6 +142,15 @@ sub getReportData {
         my $type        = $report->type;
 
         ( $sql, undef ) = $report->prep_report( \@param_names, \@sql_params );
+        
+        # Handle pagination parameters
+        my $page = $c->validation->param('_page');
+        my $per_page = $c->validation->param('_per_page');
+
+        if ($page && $per_page) {
+            my $offset = ($page - 1) * $per_page;
+            $sql .= " LIMIT $per_page OFFSET $offset";
+        }
 
         $log->info(("API user " . $user->borrowernumber). " " . $user->firstname . " " . $user->surname . " requested report: ReportServices API running Report with id " . $report_id . "\n");
 
