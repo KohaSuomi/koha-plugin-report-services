@@ -230,6 +230,41 @@ YAML
     }
 };
 
+subtest 'Pagination parameters are handled correctly' => sub {
+    plan tests => 4;
+
+    my $report = Koha::Report->new(
+        {
+            report_name => 'report_name_for_test_pagination',
+            savedsql    => 'WITH RECURSIVE numbers AS (SELECT 1 AS number UNION ALL SELECT number + 1 FROM numbers WHERE number < 50) SELECT number FROM numbers', # Generate 50 rows of data
+        }
+    )->store;
+    my $report_id = $report->id;
+
+    my $patron = $builder->build_object({
+        class => 'Koha::Patrons',
+        value => { flags => 1 }
+    });
+    my $password = 'thePassword123';
+    $patron->set_password({ password => $password, skip_validation => 1 });
+
+    my $userid         = $patron->userid;
+    my $borrowernumber = $patron->borrowernumber;
+
+    my $allowed_report_ids = <<YAML;
+$borrowernumber:
+  - $report_id
+YAML
+    Koha::Plugin::Fi::KohaSuomi::ReportServices->new()->store_data({
+        allowed_report_ids => $allowed_report_ids,
+    });
+
+    my $response = $t->get_ok("//$userid:$password@/api/v1/contrib/kohasuomi/reportservices/reports?report_id=$report_id&_page=2&_per_page=10")
+        ->status_is(200)
+        ->json_is('/0/number', 11, 'First item on page 2 should be 11')
+        ->json_is('/9/number', 20, 'Last item on page 2 should be 20');
+};
+
 # Rollback the transaction, so we don't leave test data in the database
 $schema->storage->txn_rollback;
 
