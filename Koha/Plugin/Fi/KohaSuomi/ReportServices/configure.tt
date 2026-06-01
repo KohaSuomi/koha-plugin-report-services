@@ -1,17 +1,22 @@
+[% TRY %]
+    [% PROCESS "$PLUGIN_DIR/i18n/${LANG}.inc" %]
+[% CATCH %]
+    [% PROCESS "$PLUGIN_DIR/i18n/default.inc" %]
+[% END %]
 [% USE KohaDates %]
 [% INCLUDE 'doc-head-open.inc' %]
- <title>Raportteri: Konfiguraatio</title>
+ <title>[% T.configure_1 %]</title>
 [% INCLUDE 'doc-head-close.inc' %]
 </head>
 <body>
 [% INCLUDE 'header.inc' %]
 [% INCLUDE 'cat-search.inc' %]
 
-<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Pluginit</a> &rsaquo; Raportteri &rsaquo; konfiguraatio</div>
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">[% T.configure_2 %]</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">[% T.configure_3 %]</a>[% T.configure_4 %]</div>
 
 <div id="doc3" style="margin: 10px;">
     <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
-    <h3>Raportteri: Konfiguraatio</h3>
+    <h3>[% T.configure_1 %]</h3>
 
     <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
     <form method="get">
@@ -21,26 +26,26 @@
 
         <p>
 
-        <label for="allowed_report_ids">Raporttirajapinnan /reportservices/report ajettavaksi sallittavat Kohan sql-raporttien id:t asiakas-id:n mukaan: </label>
+        <label for="allowed_report_ids">[% T.configure_5 %]</label>
         </p>
         <textarea style="margin: 10px;" id="yaml_config" cols="40" rows="18" name="allowed_report_ids">[% allowed_report_ids %]</textarea>
 
         <input type="hidden" name="save" value="1" />
 
-        <input type="submit" value="Tallenna" />
+        <input type="submit" value="[% T.configure_6 %]" />
     </form>
     
     <div>
         <p>
-        <b>Konfiguroi yaml-muodossa seuraavasti:</b>
+        <b>[% T.configure_7 %]</b>
         </p>
         
         <pre>---</pre>
-        <pre>[rajapintaa käyttävän api-asiakkaan asiakas-id/borrowernumber]:</pre>
-        <pre>  - [ajettavaksi sallittava raportti-id]</pre>
+        <pre>[% T.configure_8 %]</pre>
+        <pre>[% T.configure_9 %]</pre>
         
         <p>  
-            <b>Esimerkki:</b>
+            <b>[% T.configure_10 %]</b>
             <pre>---</pre>
             <pre>123456:</pre>
             <pre>  - 512</pre>
@@ -55,14 +60,14 @@
     <hr/>
 
     <p>
-        <h5>Update/Upgrade status</h5>
+        <h5>[% T.configure_11 %]</h5>
         [% IF last_configured_by %]
-            Plugin settings were last updated by borrowernumber [% last_configured_by %].
+            [% T.configure_12 %] [% last_configured_by %].
         [% END %]
         [% IF last_upgraded %]
-            Plugin was last upgraded on this system on [% last_upgraded | $KohaDates with_hours => 1 %]
+            [% T.configure_13 %] [% last_upgraded | $KohaDates with_hours => 1 %]
         [% ELSE %]
-            Plugin has never been upgraded.
+            [% T.configure_14 %]
         [% END %]
     </p>
 

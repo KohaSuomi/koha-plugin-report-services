@@ -31,8 +31,8 @@ sub get_localized_metadata {
         $name = "Rapporteringstjänst";
         $description = "Ett plugin för insamling och överföring av statistikdata från Koha till en extern rapporteringstjänst. (Lokala databaser, endast vid behov)";
     } elsif ( $lang eq 'fi-FI' ) {
-        $name = "Raportointi palvelu";
-        $description = "Plugin tilastotietojen keräämiseen ja lähettämiseen Kohasta ulkoiseen raportointipalveluun. (Paikalliskannat, vain tarvittaessa)";
+        $name = "Raportteri";
+        $description = "Liitännäinen tilastotietojen keräämiseen ja lähettämiseen Kohasta ulkoiseen raportointipalveluun. (Paikalliskannat, vain tarvittaessa)";
     } else {
         $name = "Report Service";
         $description = "A plugin for collecting and sending statistical data from Koha to an external reporting service.";
