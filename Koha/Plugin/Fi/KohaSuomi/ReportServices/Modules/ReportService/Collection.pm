@@ -94,7 +94,7 @@ sub is_floating_by_float_rules {
     my $biblioitem = Koha::Biblioitems->find({ biblionumber => $item->biblionumber});
     my $yaml = C4::Context->preference('FloatRules');
     my $rules = YAML::XS::Load(Encode::encode_utf8($yaml));
-    return 0 unless $rules || !$item->barcode;
+    return "nofloatrulesset" unless $rules || !$item->barcode;
 
     my $item_homebranch = $item->homebranch;
     while(my($branches_key, $rule) = each %$rules) {
@@ -103,8 +103,8 @@ sub is_floating_by_float_rules {
         my $from_branch = $branches[0];
         my $to_branch = $branches[1];
 
-        if($item_homebranch =~ m/^$from_branch/ || $item_homebranch =~ m/^$to_branch/){
-            my $checkrules;
+        next unless($item_homebranch =~ m/^$from_branch/ || $item_homebranch =~ m/^$to_branch/);
+            my $checkrules = 0;
             foreach my $current_branch (@$libraries){
                 if($current_branch =~ m/^$from_branch/ || $current_branch =~ m/^$to_branch/){
                     if($branches_key =~ m/->/){
@@ -145,13 +145,10 @@ sub is_floating_by_float_rules {
                         my $ok = eval("return 1 if($evalCondition);");
                         if ( $ok && $evalCondition ) {
                             return 1;
-                        } else {
-                            return 0;
                         };
                     }
                 }
             }
-        }
     }
 }
 
