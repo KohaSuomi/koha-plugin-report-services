@@ -52,6 +52,9 @@ sub collect_report_data {
     my $itemtypes = get_itemtypes();
     my $shelving_locations = get_locations();
 
+    my $yaml = C4::Context->preference('FloatRules');
+    my $floatrules = YAML::XS::Load(Encode::encode_utf8($yaml));
+
     my $json_file = $tmppath.$filename;
 
     my $json_data = [];
@@ -63,7 +66,7 @@ sub collect_report_data {
 
     while (my $items = $chunker->get_chunk(undef, $limit)) {
         foreach my $item (@$items) {
-            my $data_chunk = create_data_chunk($item, \@subject_fields, $libraries, $itemtypes, $shelving_locations);
+            my $data_chunk = create_data_chunk($item, \@subject_fields, $libraries, $itemtypes, $shelving_locations, $floatrules);
             push @$json_data, $data_chunk;
         }
         open(my $fh, '>', $json_file);
@@ -76,7 +79,7 @@ sub collect_report_data {
 }
 
 sub create_data_chunk {
-    my ($item, $subject_fields, $libraries, $itemtypes, $shelving_locations) = @_;
+    my ($item, $subject_fields, $libraries, $itemtypes, $shelving_locations, $floatrules) = @_;
 
     my $collection = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Collection->new();
     my $issue = Koha::Plugin::Fi::KohaSuomi::ReportServices::Modules::ReportService::Issue->new();
@@ -92,14 +95,11 @@ sub create_data_chunk {
 
     my @libraries = keys %$libraries;
     my $koha_item = Koha::Items->find({ barcode => $item->{barcode} });
-
-    my $floats_by_float_groups = $collection->is_floating_by_float_groups($koha_item, \@libraries);
-    my $floats_by_float_rules  = $collection->is_floating_by_float_rules($koha_item, \@libraries);
     
-    if($floats_by_float_groups || ( $floats_by_float_rules && $floats_by_float_rules ne "nofloatrulesset")){
-        $item->{floats} = 1;
-    } else {
-        $item->{floats} = 0;
+    $item->{floats} = $collection->is_floating_by_float_groups($koha_item, \@libraries);
+    if ( $floatrules && !$item->{floats} ){
+        my $biblioitem = Koha::Biblioitems->find({ biblionumber => $koha_item->biblionumber});
+        $item->{floats}  = $collection->is_floating_by_float_rules($koha_item, \@libraries, $biblioitem, $floatrules);
     }
 
     # Collect library name, itemtype description etc.
