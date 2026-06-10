@@ -89,12 +89,7 @@ sub is_floating_by_float_groups {
 }
 
 sub is_floating_by_float_rules {
-    my ($self, $item, $libraries) = @_;
-
-    my $biblioitem = Koha::Biblioitems->find({ biblionumber => $item->biblionumber});
-    my $yaml = C4::Context->preference('FloatRules');
-    my $rules = YAML::XS::Load(Encode::encode_utf8($yaml));
-    return "nofloatrulesset" unless $rules || !$item->barcode;
+    my ($self, $item, $libraries, $biblioitem, $rules) = @_;
 
     my $item_homebranch = $item->homebranch;
     while(my($branches_key, $rule) = each %$rules) {
