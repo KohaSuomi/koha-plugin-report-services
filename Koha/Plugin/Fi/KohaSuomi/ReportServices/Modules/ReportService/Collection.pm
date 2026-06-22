@@ -91,6 +91,8 @@ sub is_floating_by_float_groups {
 sub is_floating_by_float_rules {
     my ($self, $item, $libraries, $biblioitem, $rules) = @_;
 
+    keys %$rules;
+
     my $item_homebranch = $item->homebranch;
     while(my($branches_key, $rule) = each %$rules) {
         my $wildcard = $branches_key =~ m/%/ ? 1 : 0;
@@ -99,51 +101,29 @@ sub is_floating_by_float_rules {
         my $to_branch = $branches[1];
 
         next unless($item_homebranch =~ m/^$from_branch/ || $item_homebranch =~ m/^$to_branch/);
-            my $checkrules = 0;
-            foreach my $current_branch (@$libraries){
-                if($current_branch =~ m/^$from_branch/ || $current_branch =~ m/^$to_branch/){
-                    if($branches_key =~ m/->/){
-                        if($wildcard){
-                            $checkrules = 1 if $current_branch =~ m/^$from_branch/ && $item_homebranch =~ m/^$to_branch/;
-                        } else {
-                            $checkrules = 1 if $current_branch eq $from_branch && $item_homebranch eq $to_branch;
-                        }
-                    } elsif($branches_key =~ m/<>/){
-                        if($wildcard){
-                            $checkrules = 1 if ( $current_branch =~ m/^$from_branch/ && $item_homebranch =~ m/^$to_branch/ )
-                            || ( $current_branch =~ m/^$to_branch/ && $item_homebranch =~ m/^$from_branch/ );
-                        } else {
-                            $checkrules = 1 if ( $current_branch eq $from_branch && $item_homebranch eq $to_branch )
-                            || ( $current_branch eq $to_branch && $item_homebranch eq $from_branch );
-                        }
-                    }
 
-                    if($checkrules){
-                        my $evalCondition = '';
-                        if (my @rule = $rule =~ /(\w+)\s+(ne|eq|=~|<|>|==|!=)\s+(\S+)\s*(and|or|xor|&&|\|\|)?/ig) {
-                            $evalCondition .= '||' if $evalCondition ne '';
-                            $evalCondition .= '(';
-                            for (my $i=0 ; $i<scalar(@rule) ; $i+=4) {
-                                my $column = $rule[$i];
-                                my $operator = $rule[$i+1];
-                                my $value = $rule[$i+2];
-                                my $join = $rule[$i+3] || '';
-                                $evalCondition .= $column eq "itemtype"
-                                ? join(' ',"\$biblioitem->$column",$operator,"$value",$join,'')
-                                : join(' ',"\$item->$column",$operator,"$value",$join,'');
-                            }
-                            $evalCondition .= ')';
-                        }
-                        #Prevent spamming undef warnings to logs
-                        no warnings 'uninitialized';
-
-                        my $ok = eval("return 1 if($evalCondition);");
-                        if ( $ok && $evalCondition ) {
-                            return 1;
-                        };
-                    }
-                }
+        my $evalCondition = '';
+        if (my @rule = $rule =~ /(\w+)\s+(ne|eq|=~|<|>|==|!=)\s+(\S+)\s*(and|or|xor|&&|\|\|)?/ig) {
+            $evalCondition .= '||' if $evalCondition ne '';
+            $evalCondition .= '(';
+            for (my $i=0 ; $i<scalar(@rule) ; $i+=4) {
+                my $column = $rule[$i];
+                my $operator = $rule[$i+1];
+                my $value = $rule[$i+2];
+                my $join = $rule[$i+3] || '';
+                $evalCondition .= $column eq "itemtype"
+                ? join(' ',"\$biblioitem->$column",$operator,"$value",$join,'')
+                : join(' ',"\$item->$column",$operator,"$value",$join,'');
             }
+            $evalCondition .= ')';
+        }
+        #Prevent spamming undef warnings to logs
+        no warnings 'uninitialized';
+
+        my $ok = eval("return 1 if($evalCondition);");
+        if ( $ok && $evalCondition ) {
+            return 1;
+        };
     }
 }
 
