@@ -3,7 +3,7 @@
         configure_1                                = "Rapporteringstjänst: Inställningar",
         configure_2                                = "Hem",
         configure_3                                = "Plugins",
-        configure_4                                = "&rsaquo; Rapporteringstjänst &rsaquo; inställningar",
+        configure_4                                = "&rsaquo; Rapporteringstjänst &rsaquo; Inställningar",
         configure_5                                = "Tillåtna Koha SQL-rapport-ID:n för /reportservices/report baserat på låntagar-ID:",
         configure_6                                = "Spara",
         configure_7                                = "Konfigurera i YAML-format enligt följande:",
