@@ -97,7 +97,7 @@ sub create_data_chunk {
     my $koha_item = Koha::Items->find({ barcode => $item->{barcode} });
     
     $item->{floats} = $collection->is_floating_by_float_groups($koha_item, \@libraries);
-    if ( $floatrules && !$item->{floats} ){
+    if ( $floatrules && $koha_item && !$item->{floats} ){
         my $biblioitem = Koha::Biblioitems->find({ biblionumber => $koha_item->biblionumber});
         $item->{floats}  = $collection->is_floating_by_float_rules($koha_item, \@libraries, $biblioitem, $floatrules);
     }
