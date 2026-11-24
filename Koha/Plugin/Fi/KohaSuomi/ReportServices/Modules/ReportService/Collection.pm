@@ -71,20 +71,22 @@ sub subject_added_entries {
 sub is_floating_by_float_groups {
     my ($self, $item, $libraries) = @_;
 
-    my $hbr = Koha::CirculationRules->get_return_branch_policy($item);
-    my $item_float_groups = _float_groups($item->homebranch);
-    my $validate_float = 0;
-    if($item_float_groups){
-        foreach my $library (@$libraries){
-            my $library_float_groups = _float_groups($library);
-            foreach my $item_float_group (@$item_float_groups){
-                if ( grep( /^$item_float_group$/, @$library_float_groups ) ) {
-                    $validate_float = 1;
+    if($item){
+        my $hbr = Koha::CirculationRules->get_return_branch_policy($item);
+        my $item_float_groups = _float_groups($item->homebranch);
+        my $validate_float = 0;
+        if($item_float_groups){
+            foreach my $library (@$libraries){
+                my $library_float_groups = _float_groups($library);
+                foreach my $item_float_group (@$item_float_groups){
+                    if ( grep( /^$item_float_group$/, @$library_float_groups ) ) {
+                        $validate_float = 1;
+                    }
                 }
             }
         }
+        return 1 if $hbr eq "returnbylibrarygroup" && $validate_float;
     }
-    return 1 if $hbr eq "returnbylibrarygroup" && $validate_float;
     return 0;
 }
 
