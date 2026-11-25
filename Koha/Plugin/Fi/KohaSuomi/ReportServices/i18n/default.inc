@@ -1,9 +1,9 @@
 [%
     T = {
-        configure_1                                = "Report Services: Configure",
+        configure_1                                = "Report service: Configure",
         configure_2                                = "Home",
         configure_3                                = "Plugins",
-        configure_4                                = "&rsaquo; Report Services &rsaquo; Configuration",
+        configure_4                                = "&rsaquo; Report service &rsaquo; Configuration",
         configure_5                                = "Allowed Koha’s SQL report IDs for the /reportservices/report endpoint by client ID:",
         configure_6                                = "Save",
         configure_7                                = "Configure in YAML format as follows:",
