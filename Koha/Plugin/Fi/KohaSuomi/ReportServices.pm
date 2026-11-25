@@ -34,8 +34,8 @@ sub get_localized_metadata {
         $name = "Raportteri";
         $description = "Liitännäinen tilastotietojen keräämiseen ja lähettämiseen Kohasta ulkoiseen raportointipalveluun. (Paikalliskannat, vain tarvittaessa)";
     } else {
-        $name = "Report Service";
-        $description = "A plugin for collecting and sending statistical data from Koha to an external reporting service.";
+        $name = "Report service";
+        $description = "A plugin for collecting and sending statistical data from Koha to an external reporting service. (Local databases, only when necessary)";
     }
     return ($name, $description);
 };
